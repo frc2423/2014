@@ -12,7 +12,7 @@ class shooter(object):
         
     def set_speed(self, d_speed):
         self.d_speed = d_speed
-        self.set_speed = d_speed
+
         
     def update(self):
         self.shooter_jag.set_speed(self.set_speed)
