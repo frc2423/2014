@@ -1,7 +1,7 @@
 try:
-    import wpilib 
-except ImportError:s
-    import fake_wpilib as wpilib
+	import wpilib 
+except ImportError:
+	import fake_wpilib as wpilib
 
 #
 #Import all systems and components here
@@ -27,7 +27,7 @@ feeder_wheel_jag = 2
 joystick_channel_one = 1
 
 #Joysticks
-joystick_one = wpilib.joystick(joystick_channel_one)
+joystick_one = wpilib.Joystick(joystick_channel_one)
 #
 #Create motors/sensors here
 #
@@ -47,10 +47,7 @@ joystick_one_y = joystick_one.GetY()
 joystick_one_throttle = joystick_one.GetThrottle()
 joystick_one_trigger = joystick_one.GetTrigger()
 
-#class variables
-shooter = shooter.shooter
-angle = angle.angle
-feeder = feeder.feeder
+
 class MyRobot (wpilib.SimpleRobot):
 	def __init__(self):
 		wpilib.SimpleRobot.__init__(self)
@@ -63,11 +60,11 @@ class MyRobot (wpilib.SimpleRobot):
 		
 		#create component instances
 		'''ex self.my_feeder = Feeder(feeder_motor, 
-                                   frisbee_sensor, 
-                                   feeder_sensor)'''
+		frisbee_sensor, 
+		feeder_sensor)'''
 		self.my_feeder = feeder(feeder_wheel)
-        self.my_angle = angle(angle_wheel)
-        self.my_shooter = shooter(shooter_wheel)
+		self.my_angle = angle(angle_wheel)
+		self.my_shooter = shooter(shooter_wheel)
 		
 		#create system instances
 			#ex self.my_auto_targeting = AutoTargeting(self.my_robot_turner, self.my_shooter_platform, self.my_target_detector)
@@ -90,37 +87,44 @@ class MyRobot (wpilib.SimpleRobot):
 		#self.sd.PutNumber("Robot Mode", self.MODE_DISABLED)
 		
 		
-	def Autonomous(self):        
-        print("MyRobot::Autonomous()")
-        
-        #self.sd.PutNumber("Robot Mode", self.MODE_AUTONOMOUS)
-        
+	def Autonomous(self):		
+		print("MyRobot::Autonomous()")
+
+		#self.sd.PutNumber("Robot Mode", self.MODE_AUTONOMOUS)
+
 		
 	def OperatorControl(self):
-        print("MyRobot::OperatorControl()")
-        
-        #self.sd.PutNumber("Robot Mode", self.MODE_TELEOPERATED)
-        
-        #
-        #angle
-        #
-        '''no definitive plan for angle control'''
-        
-        #
-        #shooter
-        #
-        self.throttle = self.joystick_one_throttle
-        shooter.set_speed(self.throttle)
-          
-        #
-        #feeder
-        #
-        if joystick_one_trigger == self.pressed:
-            feeder.feed()
-            
-        # set the watch dog
-        dog = self.GetWatchdog()
-        dog.SetEnabled(False)
-        dog.SetExpiration(0.25)
+		print("MyRobot::OperatorControl()")
+
+		#self.sd.PutNumber("Robot Mode", self.MODE_TELEOPERATED)
+		
+			#
+		#angle
+		#
+		'''no definitive plan for angle control'''
+		
+		#
+		#shooter
+		#
+		self.d_speed = joystick_one_throttle
+		shooter.set_speed(self, self.d_speed)
+
+		#
+		#feeder
+		#
+		if joystick_one_trigger == pressed:
+			feeder.feed()
+			
+		# set the watch dog
+		dog = self.GetWatchdog()
+		dog.SetEnabled(False)
+		dog.SetExpiration(0.25)
+		
+def run():
+    
+    robot = MyRobot()
+    robot.StartCompetition()
+    
+    return robot
 
 
