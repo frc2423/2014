@@ -1,6 +1,6 @@
 try:
     import wpilib 
-except ImportError:
+except ImportError:s
     import fake_wpilib as wpilib
 
 #
@@ -47,7 +47,10 @@ joystick_one_y = joystick_one.GetY()
 joystick_one_throttle = joystick_one.GetThrottle()
 joystick_one_trigger = joystick_one.GetTrigger()
 
-
+#class variables
+shooter = shooter.shooter
+angle = angle.angle
+feeder = feeder.feeder
 class MyRobot (wpilib.SimpleRobot):
 	def __init__(self):
 		wpilib.SimpleRobot.__init__(self)
@@ -59,10 +62,12 @@ class MyRobot (wpilib.SimpleRobot):
 		
 		
 		#create component instances
-			'''ex self.my_feeder = Feeder(feeder_motor, 
+		'''ex self.my_feeder = Feeder(feeder_motor, 
                                    frisbee_sensor, 
                                    feeder_sensor)'''
-		
+		self.my_feeder = feeder(feeder_wheel)
+        self.my_angle = angle(angle_wheel)
+        self.my_shooter = shooter(shooter_wheel)
 		
 		#create system instances
 			#ex self.my_auto_targeting = AutoTargeting(self.my_robot_turner, self.my_shooter_platform, self.my_target_detector)
@@ -104,14 +109,14 @@ class MyRobot (wpilib.SimpleRobot):
         #
         #shooter
         #
-        self.throttle = joystick_one_throttle
-        shooter.shooter.set_speed(self.throttle)
+        self.throttle = self.joystick_one_throttle
+        shooter.set_speed(self.throttle)
           
         #
         #feeder
         #
         if joystick_one_trigger == self.pressed:
-            feeder.feeder.feed()
+            feeder.feed()
             
         # set the watch dog
         dog = self.GetWatchdog()

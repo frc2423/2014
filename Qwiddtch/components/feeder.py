@@ -15,7 +15,7 @@ class feeder(object):
     def feed(self):
         current = self.feed_servo.get_angle()
         if current >= self.feed_angle_max:
-            self.set_feed = self.feed_angle_rest
+            self.set_feed = self.feed_angle_reset
         else:
             self.set_feed = current + feed_angle_increase
             
