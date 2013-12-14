@@ -6,8 +6,10 @@ except ImportError:
 #
 #Import all systems and components here
 #
-
-
+from components.angle import angle
+from components.feeder import feeder
+from components.shooter import shooter
+  
 
 #
 #Declare all the ports and channels here
@@ -21,6 +23,11 @@ shooter_wheel_can = 1
 angle_wheel_jag = 1
 feeder_wheel_jag = 2
 
+#Joystick Channels
+joystick_channel_one = 1
+
+#Joysticks
+joystick_one = wpilib.joystick(joystick_channel_one)
 #
 #Create motors/sensors here
 #
@@ -31,9 +38,14 @@ feeder_wheel = wpilib.Jaguar(feeder_wheel_jag)
 
 
 #Variables
-set_spd = 0
 set_angle = 0
+pressed = 1
 
+#Joystick buttons and axis
+joystick_one_x = joystick_one.GetX()
+joystick_one_y = joystick_one.GetY()
+joystick_one_throttle = joystick_one.GetThrottle()
+joystick_one_trigger = joystick_one.GetTrigger()
 
 
 class MyRobot (wpilib.SimpleRobot):
@@ -84,7 +96,23 @@ class MyRobot (wpilib.SimpleRobot):
         
         #self.sd.PutNumber("Robot Mode", self.MODE_TELEOPERATED)
         
+        #
+        #angle
+        #
+        '''no definitive plan for angle control'''
         
+        #
+        #shooter
+        #
+        self.throttle = joystick_one_throttle
+        shooter.shooter.set_speed(self.throttle)
+          
+        #
+        #feeder
+        #
+        if joystick_one_trigger == self.pressed:
+            feeder.feeder.feed()
+            
         # set the watch dog
         dog = self.GetWatchdog()
         dog.SetEnabled(False)
