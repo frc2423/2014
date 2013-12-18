@@ -4,16 +4,19 @@ except ImportError:
     import fake_wpilib as wpilib
     
 angle_max = 360
-class angle(object):
+class Angle(object):
      
-    def __init__(self, angle_servo):
-        self.angle_servo = angle_servo
+    def __init__(self, angle_motor):
+        '''init the angle motor ( a CANJaguar) and speed variable( speed of jaguar)'''
+        self.angle_motor = angle_motor
+        self.speed = 0
+        
+    def set_speed(self,speed):
+        ''' sets the speed that will be set on update'''
+        self.speed = speed
     
-    def angle_set(d_angle):
-        self.d_angle = d_angle
-        self.set_angle = angle_max - d_angle
-    
-    def update():
-        self.angle_servo.set_angle(self.d_angle)
+    def update(self):
+        ''' sets the speed on the jaguar'''
+        self.angle_motor.Set(self.speed)
     
     

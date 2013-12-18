@@ -3,7 +3,7 @@ try:
 except ImportError:
     import fake_wpilib as wpilib
 
-class shooter(object):
+class Shooter(object):
     '''Controls the shooter wheel'''
     
     def __init__(self, shooter_jag):
@@ -14,4 +14,4 @@ class shooter(object):
         self.d_speed = d_speed
         
     def update(self):
-        self.shooter_jag.set_speed(self.d_speed)
+        self.shooter_jag.Set(self.d_speed)
