@@ -66,9 +66,6 @@ class MyRobot (wpilib.SimpleRobot):
     def __init__(self):
         wpilib.SimpleRobot.__init__(self)
         
-        self.ds = wpilib.DriverStation.GetInstance()
-        #might have SmartDashboard maybe not. All Smart Dashboard things will be commented out
-        #self.sd = wpilib.SmartDashboard
             
         
         
@@ -81,8 +78,6 @@ class MyRobot (wpilib.SimpleRobot):
         self.shooter = Shooter(shooter_wheel)
         self.robot_drive = wpilib.RobotDrive(l_drive, r_drive)
         
-        #create system instances
-            #ex self.my_auto_targeting = AutoTargeting(self.my_robot_turner, self.my_shooter_platform, self.my_target_detector)
         
         
         
