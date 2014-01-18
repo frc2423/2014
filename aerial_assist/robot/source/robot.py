@@ -2,6 +2,9 @@ try:
     import wpilib
 except ImportError:
     from pyfrc import wpilib
+
+from common.delay import PreciseDelay
+
 #Jag channels
 front_left_channel = 1
 front_right_channel = 2
@@ -14,7 +17,7 @@ back_left_jag = wpilib.Jaguar(back_left_channel)
 back_right_jag = wpilib.Jaguar(back_right_channel)
 
 #Joystick channel
-joystick_one_channel
+joystick_one_channel = 1
 
 #Joystick
 joystick = wpilib.Joystick(joystick_one_channel)
@@ -26,7 +29,8 @@ class MyRobot(wpilib.SimpleRobot):
         wpilib.SimpleRobot.__init__(self)
         
         self.ds = wpilib.DriverStation.GetInstance()
-        self.robot_drive = wpilib.RobotDrive(front_left_jag, back_left_jag, front_right)jag, back_right_jag)
+        robot_drive = wpilib.RobotDrive(front_left_jag, back_left_jag, front_right_jag, back_right_jag)
+        self.robot_drive = robot_drive
     def RobotInit(self):
         pass
         
@@ -54,7 +58,19 @@ class MyRobot(wpilib.SimpleRobot):
             #
             x_axis = joystick.GetX()
             y_axis = joystick.GetY()
+            twist = joystick.GetTwist()
+            self.robot_drive.MecanumDrive_Polar(y_axis, x_axis, twist) 
             
-            self.robot_drive.MecanumDrive_Cartesian(y_axis, x_axis, 
+def run():
+    
+    # this is initialized in StartCompetition, but one of our
+    # constructors might use it, and crash
+    wpilib.SmartDashboard.init()
+    
+    robot = MyRobot()
+    robot.StartCompetition()
+    
+    return robot
+
 if __name__ == '__main__':
     wpilib.run()
