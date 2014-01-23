@@ -11,7 +11,7 @@ class scam(object):
         self.scam_motor = scam_motor    
         self.scam_pot = scam_pot
     
-    def move(self, move_speed):
+    def manual_move(self, move_speed):
         self.move_speed = move_speed
     
     def set_angle(self, angle, speed):
@@ -19,12 +19,5 @@ class scam(object):
         self.speed = speed
         
     def update(self):
-        
-        if self.angle is not None:
-            if self.scam_pot.Get() > self.angle:
-                self.scam_motor.Set(self.speed)
-            elif self.scam_pot.Get() < self.angle:
-                self.scam_motor.Set(self.speed * -1)
-        elif self.move_speed is not None:
-            self.scam_motor.Set(self.move_speed)
+    
             
