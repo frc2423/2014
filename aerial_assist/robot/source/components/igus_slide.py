@@ -24,7 +24,7 @@ class igus_slide(object):
 			slide limit switch 		make sure the slide is all the way back
 			winch solenoid			to use the winch quick release
 			slide distance sensor	
-			slide optical sensor	
+			slide optical/distance sensor	
 			
 	'''
 	def __init__(self, igus_motor, igus_limit_switch, igus_solenoid, igus_distance, igus_opt_limit_switch):
