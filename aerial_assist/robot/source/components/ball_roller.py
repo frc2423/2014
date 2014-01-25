@@ -11,44 +11,50 @@ except ImportError:
     #Constants
     '''Place holders for now'''
     BALL_NEAR = 1
-
+    FORWARD_ROLL_SPEED = 1
+    BACKWARD_ROLL_SPEED = -1
 
 class BallRoller():
 
-    '''Controls the wheels that roll the ball in/out, hence the name'''
+    '''
+        Controls the wheels that roll the ball in and out
+        ball_roller_motor         the motor that controls the wheels that move the ball in and out of the robot
+        ball_rollor_sensor        used to detect whether or not there is a ball in front of the robot
+         
+    '''
 
     def __init__(self, ball_roller_motor, ball_roller_sensor):
-
+        
         self.ball_roller_motor = ball_roller_motor
         self.ball_roller_sensor = ball_roller_sensor
         self.mode = None
 
-    def automatic_mode(self, ball_near, br_forward):
+    def automatic_mode(self):
+        self.mode = AUTOMATIC_MODE
 
-        self.mode = automatic_mode
-        self.ball_near = ball_near
-        self.br_forward = br_forward
+    def roll_forwards(self):
 
-    def manual_spd(self, br_manual_spd):
-
-        self.br_manual_spd = br_manual_spd
-        self.mode = manual_spd
-
-    def passing_mode(self, br_backward):
+        self.manual_roll_speed = manual_roll_speed
+        self.mode = ROLL_FORWARDS
         
-        self.br_backward = br_backward
-        self.mode = PASSING
+    def roll_backwards(self):
+        
+        self.mode = ROLL_BACKWARDS
+
+        
+    def check_for_ball
+        if self.ball_roll_sensor <= BALL_NEAR_DISTANCE:
+            return True
+        else:
+            return False
 
     def update(self):
 
-        if self.mode == AUTOMATIC_MODE and self.ball_roller_sensor.Get() <= BALL_NEAR:
-            self.ball_roller_motor.Set(br_forward)
+        if self.mode == AUTOMATIC_MODE and check_for_ball == True:
+            self.ball_roller_motor.Set(FORWARD_ROLL_SPEED)
 
-        if self.mode == AUTOMATIC_MODE and self.ball_roller_sensor.Get() >= BALL_NEAR:
+        if self.mode == AUTOMATIC_MODE and self.check_for_ball == False:
             self.ball_roller_motor.Set(0)
 
-        if self.mode == MANUAL_SPD:
-            self.ball_roller.Set(maunual_spd)
-
-        if self.mode == PASSING:
-            self.ball_roller_motor.Set(br_backward)
+        if self.mode == ROLL_BACKWARDS:
+            self.ball_roller_motor.Set(BACKWARD_ROLL_SPEED)

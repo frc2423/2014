@@ -10,8 +10,7 @@ pulling = 2
 releasing = 3
 manual_pull = 4
 
-#Constants
-'''these are not final yet, just place holders'''
+#Constants not definite values yet
 IGUS_SENSOR_DISTANCE = 1
 PULL_BACK_SPEED = 1
 BALL_RELEASE_WAIT_TIME = 1
@@ -23,8 +22,8 @@ class igus_slide(object):
 			winch motor 			for pulling back the ball
 			slide limit switch 		make sure the slide is all the way back
 			winch solenoid			to use the winch quick release
-			slide distance sensor	
-			slide optical/distance sensor	
+			slide distance sensor	for detecting slide position
+			slide optical sensor	for detecting slide position
 			
 	'''
 	def __init__(self, igus_motor, igus_limit_switch, igus_solenoid, igus_distance, igus_opt_limit_switch):
@@ -64,11 +63,10 @@ class igus_slide(object):
 			self.mode = releasing
 
 		if self.mode == releasing:
-			'''make sure ball launches fully before stopping again''' 
+			'make sure ball launches fully before stopping again' 
 			wpilib.wait(BALL_RELEASE_WAIT_TIME)
 			self.igus_solenoid.Set(False)
 			self.mode = None
-			
 			
 		if self.mode == manual_pull:
 			self.igus_motor.Set(self.pull_speed)

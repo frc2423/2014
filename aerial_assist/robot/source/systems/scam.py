@@ -14,29 +14,30 @@ PASSING = 2
 
 #Variables
 '''place holders for now'''
-ball_near = .5
-br_forward = 1
-loading_spd = 1
-br_backward = -1
-scam_backward = -1
-    
+ANGLE_SPEED = 1
+LOADING_ANGLE = 0
+
 class scam(object):
     
     def __init__(self, scam_motor, scam_pot, igus_slide, ball_roller):
+        
+        '''
+           Controls the 4 bar linkage with the linear actuator
+           scam_motor        the motor attached to the linear actuator, controls 4 bar linkage
+           scam_pot          detects what angle the igus_slide is at
+        '''
+        
         self.scam_motor = scam_motor    
         self.scam_pot = scam_pot
         self.igus_slide = igus_slide
         self.ball_roller = ball_roller
         self.mode = None
 
-    def angle_control(self, scam_angle):
-        self.scam_angle = scam_angle
-
+    def angle_control(self, d_angle):
+        self.d_angle = d_angle
         self.mode = ANGLE_CONTROL
-
-    def load_ball(self, loading_angle, loading_spd):
-        self.Loading_angle = loading_angle
-    #loadimg angle and spd might never change but I'm not sure
+        
+    def load_ball():
         self.mode = LOADING
 
     def pass_ball(self, passing_angle)
@@ -46,16 +47,19 @@ class scam(object):
 
     def update(self):
 
-        if self.mode == ANGLE_CONTROL:
-            self.scam_motor.Set(self.scam_angle)
+        if self.mode == ANGLE_CONTROL and self.scam_pot.Get() > d_angle:
+            self.scam_motor.Set(angle_speed)
+        
+        if self.mode == ANGLE_CONTROL and self.scam_pot.Get() < d_angnle:
+            self.scam_motor.Set(angle_speed * -1)
 
-        if self.mode == LOADING and self.scam_pot.Get() != self.loading_angle:
-            self.ball_roller.automatic_mode(ball_near, br_forward)
-            self.scam_motor.Set(loading_spd)
+        if self.mode == LOADING and self.scam_pot.Get() != LOADING_ANGLE:
+            self.angle_control(LOADING_ANGLE)
+            
 #might squish the ball writtent this way
 
         if self.mode == LOADING and self.scam_pot.Get() == self.loading_angle:
-            self.ball_roller.automatic_mode(ball_near, br_forward)
+            self.ball_roller.automatic_mode()
             self.scam_motor.Set(0)
 
         if self.mode == PASSING and self.scam_pot.Get() == self.assing_angle:
