@@ -6,7 +6,7 @@ except ImportError:
     #States
     ROLL_FORWARDS = 0
     ROLL_BACKWARDS = 1
-    AUTOMATIC_MODE =2
+    AUTOMATIC_MODE = 2
 
     #Constants
     '''Place holders for now'''
@@ -56,3 +56,6 @@ class BallRoller():
 
         if self.mode == ROLL_BACKWARDS:
             self.ball_roller_motor.Set(BACKWARD_ROLL_SPEED)
+            
+        if self.mode == ROLL_FORWARDS:
+            self.ball_roller.Set(FORWARDS_ROLL_SPEED)

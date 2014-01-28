@@ -34,10 +34,10 @@ class igus_slide(object):
 		self.igus_distance = igus_distance
 		self.igus_opt_limit_switch = igus_opt_limit_switch
 		self.mode = None
-		
+		self.ready = None
 	def is_ready(self):
 		'returns True if the slide is all the way pulled back and ready to be released'
-		if self.ready == True:
+		if self.igus_limit_switch <= SLIDE_READY_DISTANCE:
 			return True
 		else:
 			return False
@@ -93,7 +93,6 @@ class igus_slide(object):
 				self.igus_motor.Set(RELEASE_SPEED)
 			
 			if self.igus_slide_opt_limit_switch <= RELEASE_DISTANCE:
-			
 				self.igus_motor.Set(0)
 				self.mode = None
 		
