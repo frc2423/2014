@@ -4,9 +4,9 @@ except ImportError:
     from pyfrc import wpilib
 
     #States
-    AUTOMATIC_MODE = 1
-    MAUNUAL_SPD = 2
-    PASSING = 0
+    ROLL_FORWARDS = 0
+    ROLL_BACKWARDS = 1
+    AUTOMATIC_MODE =2
 
     #Constants
     '''Place holders for now'''
@@ -33,8 +33,6 @@ class BallRoller():
         self.mode = AUTOMATIC_MODE
 
     def roll_forwards(self):
-
-        self.manual_roll_speed = manual_roll_speed
         self.mode = ROLL_FORWARDS
         
     def roll_backwards(self):
@@ -42,7 +40,7 @@ class BallRoller():
         self.mode = ROLL_BACKWARDS
 
         
-    def check_for_ball
+    def check_for_ball(self):
         if self.ball_roll_sensor <= BALL_NEAR_DISTANCE:
             return True
         else:
