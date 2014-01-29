@@ -37,38 +37,23 @@ class scam(object):
         self.d_angle = d_angle
         self.mode = ANGLE_CONTROL
         
-    def load_ball():
+    def load_ball(self):
         if self.igus_slide.ready_to_load == True and self.ball_roller.check_for_ball == True:
-            self.mode == LOADING
-
-    def pass_ball(self):
-        self.igus_slide.slow_release()
-        
-        
+            self.mode = LOADING        
         
     def pull_winch(self):
         
 
     def update(self):
-
-        if self.mode == ANGLE_CONTROL and self.scam_pot.Get() > d_angle + ANGLE_THRESHOLD:
-            self.scam_motor.Set(angle_speed)
+        if self.mode == ANGLE_CONTROL and self.scam_pot.Get() > self.d_angle + ANGLE_THRESHOLD:
+            self.scam_motor.Set(ANGLE_SPEED)
         
-        if self.mode == ANGLE_CONTROL and self.scam_pot.Get() < d_angnle - ANGLE_THRESHOLD:
-            self.scam_motor.Set(angle_speed * -1)
+        if self.mode == ANGLE_CONTROL and self.scam_pot.Get() < self.d_angnle - ANGLE_THRESHOLD:
+            self.scam_motor.Set(ANGLE_SPEED * -1)
 
         if self.mode == LOADING and self.scam_pot.Get() != LOADING_ANGLE:
             self.angle_control(LOADING_ANGLE)
             
-#might squish the ball writtent this way
-
         if self.mode == LOADING and self.scam_pot.Get() == self.loading_angle:
             self.ball_roller.automatic_mode()
             self.scam_motor.Set(0)
-
-        if self.mode == PASSING and self.scam_pot.Get() == self.passing_angle:
-            
-        if self.mode == PASSING and self.scam_pot.Get() != self.passing_angle:
-            self.ball_roller.passing_mode(br_backward)
-            self.scam_motor.Set(scam_backwards)
-            

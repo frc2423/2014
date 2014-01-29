@@ -41,21 +41,21 @@ class BallRoller():
 
         
     def check_for_ball(self):
-        if self.ball_roll_sensor <= BALL_NEAR_DISTANCE:
+        if self.ball_roll_sensor <= BALL_NEAR:
             return True
         else:
             return False
 
     def update(self):
 
-        if self.mode == AUTOMATIC_MODE and check_for_ball == True:
+        if self.mode == AUTOMATIC_MODE and self.check_for_ball() == True:
             self.ball_roller_motor.Set(FORWARD_ROLL_SPEED)
 
-        if self.mode == AUTOMATIC_MODE and self.check_for_ball == False:
+        if self.mode == AUTOMATIC_MODE and self.check_for_ball() == False:
             self.ball_roller_motor.Set(0)
 
         if self.mode == ROLL_BACKWARDS:
             self.ball_roller_motor.Set(BACKWARD_ROLL_SPEED)
             
         if self.mode == ROLL_FORWARDS:
-            self.ball_roller.Set(FORWARDS_ROLL_SPEED)
+            self.ball_roller.Set(FORWARD_ROLL_SPEED)
