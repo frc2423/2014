@@ -41,7 +41,7 @@ class scam(object):
         if self.igus_slide.ready_to_load == True and self.ball_roller.check_for_ball == True:
             self.mode == LOADING
 
-    def pass_ball(self)
+    def pass_ball(self):
         self.igus_slide.slow_release()
         
         

@@ -71,7 +71,6 @@ class igus_slide(object):
 				self.mode = None
 			
 		elif self.mode == SHOOT:
-			
 			self.igus_solenoid.Set(True)
 			self.mode = releasing
 
