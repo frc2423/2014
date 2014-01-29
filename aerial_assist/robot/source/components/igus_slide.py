@@ -66,7 +66,7 @@ class igus_slide(object):
 				self.igus_motor.Set(PULL_BACK_SPEED)
 			
 			
-			if self.igus_limit_switch == True:
+			elif self.igus_limit_switch == True:
 				self.igus_solenoid.Set(False)
 				self.mode = None
 			
@@ -82,11 +82,11 @@ class igus_slide(object):
 			self.mode = None
 		
 		elif self.mode == SLOW_RELEASE: 
-			if self.igus_slide_opt_limit_switch >= RELEASE_DISTANCE:
+			if self.igus_slide_opt_limit_switch == False:
 				'slowly move the slide forward instead of switching the gear, not sure if possible'
 				self.igus_motor.Set(RELEASE_SPEED)
 			
-			if self.igus_slide_opt_limit_switch <= RELEASE_DISTANCE:
+			elif self.igus_slide_opt_limit_switch == True:
 				self.igus_motor.Set(0)
 				self.mode = None
 		
