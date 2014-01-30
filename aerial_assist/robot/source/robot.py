@@ -16,6 +16,12 @@ front_right_jag = wpilib.Jaguar(front_right_channel)
 back_left_jag = wpilib.Jaguar(back_left_channel)
 back_right_jag = wpilib.Jaguar(back_right_channel)
 
+#Compressor channels
+compressorRelayChannel = 0
+pressureSwitchChannel = 1
+#Compressor
+compressor = wpilib.Compressor(pressureSwitchChannel, compressorRelayChannel)
+
 #Joystick channel
 joystick_one_channel = 1
 

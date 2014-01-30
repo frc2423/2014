@@ -47,10 +47,11 @@ class igus_slide(object):
 		self.mode = PULL_BACK
 		
 	def ready_to_load(self):
+#Maybe should have if not ready to load put the slide down until it hits the limit switch. Also check scam.
 		return self.igus_opt_limit_switch.Get()
 	
 	def update(self):
-		
+#Seems that we want it to stop when it hits the optical limit switch and then the mechanical limit switch is back up from what I understand
 		if self.mode == PULL_BACK:
 			'pulls back the slide until it hits the limit switch'
 			if self.igus_limit_switch == False:
@@ -68,6 +69,7 @@ class igus_slide(object):
 			self.mode = SHOOTING
 
 		elif self.mode == SHOOTING:
+#What are you even trying to do here? Should be a timer object if you want a delay not a wpilib.wait function
 			'make sure ball launches fully before stopping again' 
 			wpilib.wait(BALL_RELEASE_WAIT_TIME)
 			self.igus_solenoid.Set(False)

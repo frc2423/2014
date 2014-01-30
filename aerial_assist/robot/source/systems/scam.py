@@ -34,23 +34,29 @@ class scam(object):
         self.mode = None
 
     def angle_control(self, d_angle):
+        #d_angle? No clue what that is.
+        #Angle control mode for up but limit switch mode for loading mode (down).
         self.d_angle = d_angle
         self.mode = ANGLE_CONTROL
         
     def load_ball(self):
         if self.igus_slide.ready_to_load == True and self.ball_roller.check_for_ball == True:
-            self.mode = LOADING        
+            self.mode = LOADING    
+            
+    #Check the igus_slide for other comments    
         
     def pull_winch(self):
-        
-
+        pass
+    
     def update(self):
+        
+        #Not really sure what you're are trying to do. Need limit switch control for going down.
         if self.mode == ANGLE_CONTROL and self.scam_pot.Get() > self.d_angle + ANGLE_THRESHOLD:
             self.scam_motor.Set(ANGLE_SPEED)
         
-        if self.mode == ANGLE_CONTROL and self.scam_pot.Get() < self.d_angnle - ANGLE_THRESHOLD:
+        if self.mode == ANGLE_CONTROL and self.scam_pot.Get() < self.d_angle - ANGLE_THRESHOLD:
             self.scam_motor.Set(ANGLE_SPEED * -1)
-
+#This seemed OK
         if self.mode == LOADING and self.scam_pot.Get() != LOADING_ANGLE:
             self.angle_control(LOADING_ANGLE)
             
