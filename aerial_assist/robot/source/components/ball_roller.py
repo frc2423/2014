@@ -4,17 +4,16 @@ except ImportError:
     from pyfrc import wpilib
 
     #States
-    ROLL_FORWARDS = 0
-    ROLL_BACKWARDS = 1
-    AUTOMATIC_MODE = 2
+    OFF = 0
+    ROLL_FORWARDS = 1
+    ROLL_BACKWARDS = 2
 
     #Constants
     '''Place holders for now'''
-    BALL_NEAR = 1
     FORWARD_ROLL_SPEED = 1
     BACKWARD_ROLL_SPEED = -1
 
-class BallRoller():
+class ball_roller():
 
     '''
         Controls the wheels that roll the ball in and out
@@ -27,35 +26,17 @@ class BallRoller():
         
         self.ball_roller_motor = ball_roller_motor
         self.ball_roller_sensor = ball_roller_sensor
-        self.mode = None
 
-    def automatic_mode(self):
-        self.mode = AUTOMATIC_MODE
-
-    def roll_forwards(self):
-        self.mode = ROLL_FORWARDS
-        
-    def roll_backwards(self):
-        
-        self.mode = ROLL_BACKWARDS
-
-        
-    def check_for_ball(self):
-        if self.ball_roll_sensor <= BALL_NEAR:
-            return True
-        else:
-            return False
+    def set(self, direction):
+        self.direction = direction
 
     def update(self):
 
-        if self.mode == AUTOMATIC_MODE and self.check_for_ball() == True:
-            self.ball_roller_motor.Set(FORWARD_ROLL_SPEED)
-
-        if self.mode == AUTOMATIC_MODE and self.check_for_ball() == False:
-            self.ball_roller_motor.Set(0)
-
-        if self.mode == ROLL_BACKWARDS:
+        if self.direction == ROLL_BACKWARDS:
             self.ball_roller_motor.Set(BACKWARD_ROLL_SPEED)
             
-        if self.mode == ROLL_FORWARDS:
+        if self.direction == ROLL_FORWARDS:
             self.ball_roller.Set(FORWARD_ROLL_SPEED)
+            
+        if self.direction == OFF:
+            self.ball_roller_motor.Set(0)

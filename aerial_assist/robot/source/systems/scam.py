@@ -9,57 +9,77 @@ except ImportError:
 
 #Modes
 ANGLE_CONTROL = 0
-LOADING = 1
-PASSING = 2
+PASSING = 1
+LOAD_MODE = 2
+SET_LOAD_MODE = 3
 
-#Variables
+#Variables 
 '''place holders for now'''
 ANGLE_SPEED = 1
 LOADING_ANGLE = 0
 ANGLE_THRESHOLD = .5
+
 class scam(object):
     
-    def __init__(self, scam_motor, scam_pot, igus_slide, ball_roller):
+    def __init__(self, l_actuator, scam_pot, igus_slide, ball_roller, ls_loading):
         
         '''
            Controls the 4 bar linkage with the linear actuator
-           scam_motor        the motor attached to the linear actuator, controls 4 bar linkage
-           scam_pot          detects what angle the igus_slide is at
+           
+           os_rear            to stop the slide when it is all the way retracted
+           ls_loading         used to know when the slide is all the way down
+           l_actuator         linear actuator controls the 4 bar linkage
+           l_actuator_pot     used to tell what angle the slide is at
+           igus_slide         instance of the igus_slide, controls the winch
+           ball_roller        instance of the ball_roller, moves the balls on and off the slide
         '''
-        
-        self.scam_motor = scam_motor    
-        self.scam_pot = scam_pot
+        self.ls_loading = ls_loading
+        self.l_actuator = l_actuator    
+        self.l_actuator_pot = scam_pot
         self.igus_slide = igus_slide
         self.ball_roller = ball_roller
         self.mode = None
-
-    def angle_control(self, d_angle):
-        #d_angle? No clue what that is.
-        #Angle control mode for up but limit switch mode for loading mode (down).
-        self.d_angle = d_angle
-        self.mode = ANGLE_CONTROL
+        self.l_actuator_val = None
         
-    def load_ball(self):
-        if self.igus_slide.ready_to_load == True and self.ball_roller.check_for_ball == True:
-            self.mode = LOADING    
+    def set_scam_angle(self, angle):
+        '''
+            figures out what position the actuator should be in so the slide is at that specific angle 
+        '''
+        self.l_actuator_val = angle
+    
+    def set_scam_speed(self, speed):
+        '''
+            sets the speed of the linear actuator motor
+        '''
+        self.l_actuator_val = speed
+        
+    def load_mode(self):
+        if not self.mode == SET_LOAD_MODE:
+            self.igus_slide.retract()
+            self.ball_roller.set(self.ball_roller.OFF)
+            self.set_scam_angle(LOADING_ANGLE)
             
-    #Check the igus_slide for other comments    
+            self.mode = SET_LOAD_MODE
         
-    def pull_winch(self):
-        pass
+    def scam_in_postion(self, position):
+        position = self.position
+        if self.position == "LOADING":
+            if self.scam_angle == LOADING_ANGLE:
+                return True
+            else:
+                return False
     
     def update(self):
         
-        #Not really sure what you're are trying to do. Need limit switch control for going down.
-        if self.mode == ANGLE_CONTROL and self.scam_pot.Get() > self.d_angle + ANGLE_THRESHOLD:
-            self.scam_motor.Set(ANGLE_SPEED)
+        if self.mode == SET_LOAD_MODE:
+            if self.ls_loading.Get() or self.scam_in_position("LOADING"):
+                self.mode = LOAD_MODE
         
-        if self.mode == ANGLE_CONTROL and self.scam_pot.Get() < self.d_angle - ANGLE_THRESHOLD:
-            self.scam_motor.Set(ANGLE_SPEED * -1)
-#This seemed OK
-        if self.mode == LOADING and self.scam_pot.Get() != LOADING_ANGLE:
-            self.angle_control(LOADING_ANGLE)
+        if self.mode == LOAD_MODE:
+            if self.auto_load and self.igus_slide.has_ball():
+                self.shoot_mode
             
-        if self.mode == LOADING and self.scam_pot.Get() == self.loading_angle:
-            self.ball_roller.automatic_mode()
-            self.scam_motor.Set(0)
+            else:
+                self.ball_roller.set("ON")
+                
+        self.l_actuator.Set(self.angle)

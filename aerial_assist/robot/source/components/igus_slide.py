@@ -1,76 +1,96 @@
 try:
-	import wpilip
+	import wpilib
 except ImportError:
 	from pyfrc import wpilib
 
 #States	
 SHOOT = 0 #next action is to shoot
-PULL_BACK = 1 #next action
-SHOOTING = 3 #in the process of shooting
+SHOOTING = 1 #in the process of shooting
+SHOT = 2
+RETRACT = 3
+RETRACTED = 4
 
 #Constants not definite values yet
-IGUS_SENSOR_DISTANCE = 1
-PULL_BACK_SPEED = 1
-BALL_RELEASE_WAIT_TIME = 1
-RELEASE_SPEED = -.5
+BALL_LAUNCHED_DISTANCE = 1
+PULL_BACK_SPEED = -1
+HAS_BALL_TIME = 1	
 
 class igus_slide(object):
 	'''
-		controls the igus slide winch
+		controls the igus_slide winch
 		motors and sensors:
-			igus motor 			for pulling back the ball
-			igus limit switch 		make sure the slide is all the way back
-			igus solenoid			to use the winch quick release
-			igus distance sensor	for detecting if ball is in the correct position
-			igus optical limit	for detecting if slide is in the correct position for loading mode
-			
+			igus_motor 				for pulling back the ball
+			os_rear					used to know when the slide is all the way bacl
+			ls_retracted 			make sure the slide is retracted, used when os_rear fails
+			igus_solenoid			to use the winch quick release
+			igus_distance sensor	for detecting if ball is in the correct position
 	'''
-	def __init__(self, igus_motor, igus_limit_switch, igus_solenoid, igus_distance, igus_opt_limit_switch):
+	def __init__(self, igus_motor, igus_limit_switch, igus_solenoid, igus_distance, os_rear):
 		self.igus_motor = igus_motor
 		self.igus_limit_switch = igus_limit_switch
 		self.igus_solenoid = igus_solenoid
 		self.igus_distance = igus_distance
-		self.igus_opt_limit_switch = igus_opt_limit_switch
-		self.mode = None
-		self.ready = None
-	def is_ready(self):
-		'returns True if the slide is all the way pulled back and ready to be released'
-		if self.igus_limit_switch == True:
-			return True
-		else:
-			return False
+		self.os_rear = os_rear
+		self.shut_solenoid = False
+		self.has_ball_timer = wpilib.Timer()
 		
 	def shoot(self):
 		self.mode = SHOOT
 	
-	def pull_back(self):
-		self.mode = PULL_BACK
+	def shut_solenoid(self):
+		self.shut_solenoid = True
 		
-	def ready_to_load(self):
-#Maybe should have if not ready to load put the slide down until it hits the limit switch. Also check scam.
-		return self.igus_opt_limit_switch.Get()
+	def retracted(self):
+		if self.mode == RETRACTED:
+			return True
+		else:
+			return False
+		
 	
+	def retract(self):
+		self.mode = RETRACT
+	
+	def has_ball(self):
+		
+		if not self.os_front.Get():
+			if self.has_ball_timer.HasPeriodPassed(HAS_BALL_TIME):
+				self.has_ball_timer.Stop()
+				return True
+			
+			elif self.has_ball_timer.Get() == 0:
+				self.has_ball_timer.Reset()
+				self.has_ball_timer.Start()
+				
+		else:
+			self.has_ball_timer.Stop()
+			self.has_ball_timer.Reset()
+			
 	def update(self):
-#Seems that we want it to stop when it hits the optical limit switch and then the mechanical limit switch is back up from what I understand
-		if self.mode == PULL_BACK:
+		if self.mode == RETRACT:
+			
 			'pulls back the slide until it hits the limit switch'
-			if self.igus_limit_switch == False:
+			if self.igus_limit_switch == False or self.os_rear.Get():
+	
 				self.igus_motor.Set(PULL_BACK_SPEED)
 			
-			
-			elif self.igus_limit_switch == True:
+			elif self.igus_limit_switch == True or not self.os_rear.Get():
+				
 				'checks if slide is all the way pulled back, and makes sure solenoid is off/closed'
 				self.igus_motor.Set(0)
-				self.igus_solenoid.Set(False)
-				self.mode = None
+				self.mode = RETRACTED
 			
 		elif self.mode == SHOOT:
+			
 			self.igus_solenoid.Set(True)
 			self.mode = SHOOTING
 
 		elif self.mode == SHOOTING:
-#What are you even trying to do here? Should be a timer object if you want a delay not a wpilib.wait function
+			
 			'make sure ball launches fully before stopping again' 
-			wpilib.wait(BALL_RELEASE_WAIT_TIME)
-			self.igus_solenoid.Set(False)
-			self.mode = None
+			if self.igus_distance.Get() >= BALL_LAUNCHED_DISTANCE:
+				self.igus_solenoid.Set(False)
+				self.mode = SHOT
+			
+		if self.shut_solenoid == True:
+			self.igus_solenoid.Sets(False)
+			self.shut_solenoid = False
