@@ -10,14 +10,16 @@ except ImportError:
 #Modes
 ANGLE_CONTROL = 0
 PASSING = 1
-LOAD_MODE = 2
-SET_LOAD_MODE = 3
+SHOOT_MODE = 2
+SET_SHOOT_MODE = 3
+LOAD_MODE = 4
+SET_LOAD_MODE = 5
 
 #Variables 
 '''place holders for now'''
 ANGLE_SPEED = 1
 LOADING_ANGLE = 0
-ANGLE_THRESHOLD = .5
+SHOOTING_ANGLE = 1
 
 class scam(object):
     
@@ -58,9 +60,15 @@ class scam(object):
             self.igus_slide.retract()
             self.ball_roller.set(self.ball_roller.OFF)
             self.set_scam_angle(LOADING_ANGLE)
-            
             self.mode = SET_LOAD_MODE
         
+    def shoot_mode(self):
+        if not self.SET_SHOOT_MODE:
+            self.igus_slide.retract()
+            self.set_scam_angle(SHOOTING_ANGLE)
+            self.ball_roller.set(self.ball_roller.OFF)
+            self.mode = SET_SHOOT_MODE
+            
     def scam_in_postion(self, position):
         position = self.position
         if self.position == "LOADING":
@@ -68,18 +76,34 @@ class scam(object):
                 return True
             else:
                 return False
-    
+            
+        if self.position =="SHOOTING":
+            if self.scam_anlge == SHOOTING_ANGLE:
+                return True
+            else:
+                return False
     def update(self):
         
+        if self.mode == SET_SHOOT_MODE:
+            
+            if self.scam_anlge < SHOOTING_ANGLE:
+                self.ball_roller.set(self.ball_roller.IN)
+                
+            if self.scam_in_postion("SHOOTING"):
+                self.mode = SHOOT_MODE
+                
+        if self.mode == SHOOT_MODE:
+            self.ball_roller.set(self.ball_roller.OFF)
+            
         if self.mode == SET_LOAD_MODE:
             if self.ls_loading.Get() or self.scam_in_position("LOADING"):
                 self.mode = LOAD_MODE
         
         if self.mode == LOAD_MODE:
             if self.auto_load and self.igus_slide.has_ball():
-                self.shoot_mode
+                self.shoot_mode()
             
             else:
-                self.ball_roller.set("ON")
+                self.ball_roller.set(self.ball_roller.OUT)
                 
         self.l_actuator.Set(self.angle)

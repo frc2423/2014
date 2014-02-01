@@ -69,7 +69,7 @@ class igus_slide(object):
 		if self.mode == RETRACT:
 			
 			'pulls back the slide until it hits the limit switch'
-			if self.igus_limit_switch == False or self.os_rear.Get():
+			if self.ls_retracted.Get() == False or self.os_rear.Get():
 	
 				self.igus_motor.Set(PULL_BACK_SPEED)
 			

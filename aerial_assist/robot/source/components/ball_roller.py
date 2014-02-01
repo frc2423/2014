@@ -10,8 +10,8 @@ except ImportError:
 
     #Constants
     '''Place holders for now'''
-    FORWARD_ROLL_SPEED = 1
-    BACKWARD_ROLL_SPEED = -1
+    IN = 1
+    OUT = -1
 
 class ball_roller():
 
@@ -33,10 +33,10 @@ class ball_roller():
     def update(self):
 
         if self.direction == ROLL_BACKWARDS:
-            self.ball_roller_motor.Set(BACKWARD_ROLL_SPEED)
+            self.ball_roller_motor.Set(IN)
             
         if self.direction == ROLL_FORWARDS:
-            self.ball_roller.Set(FORWARD_ROLL_SPEED)
+            self.ball_roller.Set(OUT)
             
         if self.direction == OFF:
             self.ball_roller_motor.Set(0)

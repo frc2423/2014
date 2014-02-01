@@ -1,13 +1,20 @@
-import wpilib
+try:
+    import wpilib
+except ImportError:
+    from pyfrc import wpilib
 
 from delay import PreciseDelay
 
 joystick = wpilib.Joystick(1)
+motor1_channel = 1
+motor2_channel = 2
 valve1_channel = 2
 valve2_channel = 1
 compressor_relay = 1
 compressor_switch = 5
 compressor = wpilib.Compressor(compressor_switch, compressor_relay)
+motor1 = wpilib.CANJaguar(motor1_channel, kPercentVbus)
+motor2 = wpilib.CANJaguar(motor2_channel, kPercentVbus)
 valve1 = wpilib.Solenoid(valve1_channel)
 valve2 = wpilib.Solenoid(valve2_channel)
 control_loop_wait_time = 0.025
@@ -45,6 +52,15 @@ class MyRobot(wpilib.SimpleRobot):
         LOWER = 1
         compressor.Start()
         while self.IsOperatorControl () and self.IsEnabled():
+            
+            zaxis = joystick.GetZ()
+            motor1.Set(zaxis, 0)
+            
+            if joystick.GetRawButton(1)
+                motor2.Set(.8, 0)
+                
+            if joystick.GetRawButton(2)
+                motor2.Set(-.8, 0)
             
             if joystick.GetRawButton(11):
                 next_state = CLIMB
