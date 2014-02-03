@@ -21,82 +21,103 @@ ANGLE_SPEED = 1
 LOADING_ANGLE = 0
 SHOOTING_ANGLE = 1
 
+#positions for scam angle
+LOADING = 0 #todo: put actual value here, float I think between 0 - 1
+SHOOTING = 1 #todo: put actual value here, float I think between 0 - 1
+
 class scam(object):
     
-    def __init__(self, l_actuator, scam_pot, igus_slide, ball_roller, ls_loading):
+    def __init__(self, l_actuator, igus_slide, ball_roller, ls_loading):
         
         '''
            Controls the 4 bar linkage with the linear actuator
            
            os_rear            to stop the slide when it is all the way retracted
            ls_loading         used to know when the slide is all the way down
-           l_actuator         linear actuator controls the 4 bar linkage
-           l_actuator_pot     used to tell what angle the slide is at
+           l_actuator         linear actuator controls the 4 bar linkage - has a potentiometer attached to it
            igus_slide         instance of the igus_slide, controls the winch
            ball_roller        instance of the ball_roller, moves the balls on and off the slide
+           
+           values used to set real positions of the Scam
+           
+           l_actuator_val     value to set the l_actuator position, maybe speed or position
         '''
         self.ls_loading = ls_loading
         self.l_actuator = l_actuator    
-        self.l_actuator_pot = scam_pot
+        #self.l_actuator_pot = scam_pot -  pot connected straight to the jag
         self.igus_slide = igus_slide
         self.ball_roller = ball_roller
         self.mode = None
         self.l_actuator_val = None
+
         
-    def set_scam_angle(self, angle):
+    def set_scam(self, val):
         '''
-            figures out what position the actuator should be in so the slide is at that specific angle 
+            function: sets l_actuator_val to the desired position
+            
+            variable: val - maybe desired position or desired speed of the l_actuator 
         '''
-        self.l_actuator_val = angle
+        self.l_actuator_val = val
     
-    def set_scam_speed(self, speed):
-        '''
-            sets the speed of the linear actuator motor
-        '''
-        self.l_actuator_val = speed
         
     def load_mode(self):
         if not self.mode == SET_LOAD_MODE:
             self.igus_slide.retract()
             self.ball_roller.set(self.ball_roller.OFF)
-            self.set_scam_angle(LOADING_ANGLE)
+            self.set_scam(LOADING_ANGLE)
             self.mode = SET_LOAD_MODE
         
     def shoot_mode(self):
         if not self.SET_SHOOT_MODE:
             self.igus_slide.retract()
-            self.set_scam_angle(SHOOTING_ANGLE)
+            self.set_scam(SHOOTING_ANGLE)
             self.ball_roller.set(self.ball_roller.OFF)
             self.mode = SET_SHOOT_MODE
             
     def scam_in_postion(self, position):
-        position = self.position
-        if self.position == "LOADING":
-            if self.scam_angle == LOADING_ANGLE:
-                return True
-            else:
-                return False
-            
-        if self.position =="SHOOTING":
-            if self.scam_anlge == SHOOTING_ANGLE:
-                return True
-            else:
-                return False
+        '''
+            Compares current scam position to the expected position
+        '''
+        if self.l_actuator.GetPosition() == position:
+            return True
+        else:
+            return True
+        
+        '''       
+            Look at the diffrence of this code and your originals
+        
+            if self.position == "LOADING":
+                if self.scam_angle == LOADING_ANGLE:
+                    return True
+                else:
+                    return False
+                
+            if self.position =="SHOOTING":
+                if self.scam_anlge == SHOOTING_ANGLE:
+                    return True
+                else:
+                    return False
+        '''
     def update(self):
         
+        
+        #code that deals with shooting and shooting transition states
         if self.mode == SET_SHOOT_MODE:
             
-            if self.scam_anlge < SHOOTING_ANGLE:
+            if self.l_actuator.GetPosition() < SHOOTING_ANGLE:
                 self.ball_roller.set(self.ball_roller.IN)
                 
-            if self.scam_in_postion("SHOOTING"):
+            if self.scam_in_postion(SHOOTING):
                 self.mode = SHOOT_MODE
                 
         if self.mode == SHOOT_MODE:
             self.ball_roller.set(self.ball_roller.OFF)
             
+        
+        #code that deals with loading and loading transition states
+        
         if self.mode == SET_LOAD_MODE:
-            if self.ls_loading.Get() or self.scam_in_position("LOADING"):
+            if self.ls_loading.Get() or self.scam_in_position(LOADING):
                 self.mode = LOAD_MODE
         
         if self.mode == LOAD_MODE:
@@ -107,3 +128,10 @@ class scam(object):
                 self.ball_roller.set(self.ball_roller.OUT)
                 
         self.l_actuator.Set(self.angle)
+        
+        #update all our components here need updated
+        self.l_actuator.update()
+        self.ball_roller.update()
+        self.igus_slide.update()
+        
+        
