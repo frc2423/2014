@@ -6,18 +6,18 @@ except ImportError:
 from delay import PreciseDelay
 
 joystick = wpilib.Joystick(1)
-motor1_channel = 1
-motor2_channel = 2
+shuttle_motor_channel = 2
+l_actuator_channel = 1
 valve1_channel = 2
 valve2_channel = 1
 compressor_relay = 1
 compressor_switch = 5
 compressor = wpilib.Compressor(compressor_switch, compressor_relay)
-motor1 = wpilib.CANJaguar(motor1_channel, kPercentVbus)
-motor2 = wpilib.CANJaguar(motor2_channel, kPercentVbus)
+shuttle_motor = wpilib.Jaguar(shuttle_motor_channel)
+l_actuator = wpilib.Jaguar(l_actuator_channel)
 valve1 = wpilib.Solenoid(valve1_channel)
 valve2 = wpilib.Solenoid(valve2_channel)
-control_loop_wait_time = 0.025
+CONTROL_LOOP_WAIT_TIME = 0.025
 next_state = None
 current_state = None
 
@@ -32,7 +32,7 @@ class MyRobot(wpilib.SimpleRobot):
     def Disabled(self):
         print("MyRobot::Disabled()")
         while self.IsDisabled():
-            wpilib.Wait(control_loop_wait_time)
+            wpilib.Wait(CONTROL_LOOP_WAIT_TIME)
             
     def Autonomous(self):
         print("MyRobot::Autonomous()")
@@ -46,28 +46,32 @@ class MyRobot(wpilib.SimpleRobot):
         global current_state
         global valve1
         global valve2
-        delay = PreciseDelay(control_loop_wait_time)
+        delay = PreciseDelay(CONTROL_LOOP_WAIT_TIME)
         wpilib
         CLIMB = 0
         LOWER = 1
         compressor.Start()
         while self.IsOperatorControl () and self.IsEnabled():
             
-            zaxis = joystick.GetZ()
-            motor1.Set(zaxis, 0)
+            if joystick.GetRawButton(8):
+                shuttle_motor.Set(.8)
+            else:
+                shuttle_motor.Set(-.8)
             
-            if joystick.GetRawButton(1)
-                motor2.Set(.8, 0)
+            
+            if joystick.GetRawButton(6):
+                l_actuator.Set(.8)
                 
-            if joystick.GetRawButton(2)
-                motor2.Set(-.8, 0)
+            elif joystick.GetRawButton(7):
+                l_actuator.Set(-.8)
             
             if joystick.GetRawButton(11):
                 next_state = CLIMB
                 print("test")
-            if joystick.GetRawButton(10):
+            elif joystick.GetRawButton(10):
                 next_state = LOWER
                 print("test2")
+            
             if next_state is not None and next_state != current_state:
                 print("test3")
                 current_state = next_state
@@ -100,4 +104,4 @@ def run():
     robot = MyRobot()
     robot.StartCompetition()
     
-    return robots
+    return robot
