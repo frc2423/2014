@@ -49,7 +49,7 @@ class scam(object):
         self.ball_roller = ball_roller
         self.mode = None
         self.l_actuator_val = None
-
+        self.has_passed_timer = wpilib.Timer
         
     def set_scam(self, val):
         '''
@@ -62,6 +62,10 @@ class scam(object):
         
     def load_mode(self):
         if not self.mode == SET_LOAD_MODE:
+            self.has_passed_timer.Stop()
+            self.has_passed_timer.Reset()
+            self.has_shot_timer.Stop()
+            self.has_shot_timer.Reset()
             self.igus_slide.retract()
             self.ball_roller.set(self.ball_roller.OFF)
             self.set_scam(LOADING_ANGLE)
@@ -69,6 +73,10 @@ class scam(object):
         
     def shoot_mode(self):
         if not self.SET_SHOOT_MODE:
+            self.has_passed_timer.Stop()
+            self.has_passed_timer.Reset()
+            self.has_ball_timer.Stop()
+            self.has_ball_timer.Reset()
             self.igus_slide.retract()
             self.set_scam(SHOOTING_ANGLE)
             self.ball_roller.set(self.ball_roller.OFF)

@@ -36,6 +36,7 @@ class igus_slide(object):
         self.has_ball_timer = wpilib.Timer()
         self.has_shot_timer = wpilib.Timer()
         
+        
         self.igus_motor_value = 0
     def shoot(self):
         '''
