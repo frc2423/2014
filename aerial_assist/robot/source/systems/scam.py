@@ -8,23 +8,26 @@ except ImportError:
 #scam motor controls the linear actuator
 
 #Modes
-ANGLE_CONTROL = 0
-PASSING = 1
-SHOOT_MODE = 2
-SET_SHOOT_MODE = 3
-LOAD_MODE = 4
-SET_LOAD_MODE = 5
+SHOOT_MODE = 0
+SET_SHOOT_MODE = 1
+LOAD_MODE = 2
+SET_LOAD_MODE = 3
+SET_PASS_MODE = 4
+PASS_MODE = 5
+PASSED = 6
 
 #Variables 
 '''place holders for now'''
 ANGLE_SPEED = 1
 LOADING_ANGLE = 0
 SHOOTING_ANGLE = 1
+PASSING_ANGLE = 0
+HAS_PASSED_TIME = 1
 
 #positions for scam angle
 LOADING = 0 #todo: put actual value here, float I think between 0 - 1
 SHOOTING = 1 #todo: put actual value here, float I think between 0 - 1
-
+PASSING = 0
 class scam(object):
     
     def __init__(self, l_actuator, igus_slide, ball_roller, ls_loading):
@@ -59,13 +62,23 @@ class scam(object):
         '''
         self.l_actuator_val = val
     
-        
+    def pass_mode(self):
+        if not self.mode == SET_PASS_MODE:
+            self.igus_slide.has_shot_timer.Stop()
+            self.igus_slide.has_shot_timer.Reset()
+            self.igus_slide.has_ball_timer.Stop()
+            self.igus_slide.has_ball_timer.Reset()
+            self.igus_slide.retract()
+            self.ball_roller.set(self.ball_roller.OUT)
+            self.set_scam(PASSING_ANGLE)
+            self.mode = SET_PASS_MODE
+            
     def load_mode(self):
         if not self.mode == SET_LOAD_MODE:
             self.has_passed_timer.Stop()
             self.has_passed_timer.Reset()
-            self.has_shot_timer.Stop()
-            self.has_shot_timer.Reset()
+            self.igus_slide.has_shot_timer.Stop()
+            self.igus_slide.has_shot_timer.Reset()
             self.igus_slide.retract()
             self.ball_roller.set(self.ball_roller.OFF)
             self.set_scam(LOADING_ANGLE)
@@ -75,8 +88,8 @@ class scam(object):
         if not self.SET_SHOOT_MODE:
             self.has_passed_timer.Stop()
             self.has_passed_timer.Reset()
-            self.has_ball_timer.Stop()
-            self.has_ball_timer.Reset()
+            self.igus_slide.has_ball_timer.Stop()
+            self.igus_slide.has_ball_timer.Reset()
             self.igus_slide.retract()
             self.set_scam(SHOOTING_ANGLE)
             self.ball_roller.set(self.ball_roller.OFF)
@@ -108,7 +121,21 @@ class scam(object):
         '''
     def update(self):
         
+        if self.mode == SET_PASS_MODE:
+            if self.scam_in_position(PASSING):
+                self.mode = PASS_MODE
         
+        if self.mode == PASS_MODE:
+            
+            if self.has_passed_timer.Get == 0:
+                self.has_passed_timer.Start()
+                
+            elif self.has_passed_timer >= HAS_PASSED_TIME:
+                self.mode = PASSED
+                self.has_passed_timer.Stop()
+                self.has_passed_timer.Reset()
+                self.ball_roller.set(self.ball_roller.OFF)
+            
         #code that deals with shooting and shooting transition states
         if self.mode == SET_SHOOT_MODE:
             

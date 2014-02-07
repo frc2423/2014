@@ -65,7 +65,12 @@ class MyRobot(wpilib.SimpleRobot):
             x_axis = joystick.GetX()
             y_axis = joystick.GetY()
             twist = joystick.GetTwist()
-            self.robot_drive.MecanumDrive_Polar(y_axis, x_axis, twist) 
+            self.robot_drive.MecanumDrive_Polar(y_axis, x_axis, twist)
+            
+            #
+            #Scam
+            #
+            
             
 def run():
     
