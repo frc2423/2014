@@ -53,6 +53,11 @@ class MyRobot(wpilib.SimpleRobot):
         compressor.Start()
         while self.IsOperatorControl () and self.IsEnabled():
             
+            x_axis = joystick.GetX()
+            y_axis = joystick.GetY()
+            twist = joystick.GetTwist()
+            self.robot_drive.MecanumDrive_Polar(y_axis, x_axis, twist)
+            
             if joystick.GetRawButton(8):
                 shuttle_motor.Set(.8)
             elif joystick.GetRawButton(9):

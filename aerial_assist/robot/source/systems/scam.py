@@ -27,7 +27,7 @@ HAS_PASSED_TIME = 1
 #positions for scam angle
 LOADING = 0 #todo: put actual value here, float I think between 0 - 1
 SHOOTING = 1 #todo: put actual value here, float I think between 0 - 1
-PASSING = 0
+PASSING = 0 #todo: put actual value here, float I think between 0 - 1
 class scam(object):
     
     def __init__(self, l_actuator, igus_slide, ball_roller, ls_loading):

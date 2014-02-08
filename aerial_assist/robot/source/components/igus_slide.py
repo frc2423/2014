@@ -27,6 +27,8 @@ class igus_slide(object):
             igus_distance sensor    for detecting if ball is in the correct position
     '''
     def __init__(self, igus_motor, igus_limit_switch, igus_solenoid, igus_distance, os_rear):
+
+
         self.igus_motor = igus_motor
         self.igus_limit_switch = igus_limit_switch
         self.igus_solenoid = igus_solenoid
@@ -35,18 +37,16 @@ class igus_slide(object):
         self.shut_solenoid = False
         self.has_ball_timer = wpilib.Timer()
         self.has_shot_timer = wpilib.Timer()
-        
-        
         self.igus_motor_value = 0
+        
     def shoot(self):
         '''
             prepairs the robot to shoot, does not allow us to shoot unless we 
             are in is_retracted mode
         '''
-        if not self.mode == RETRACTED:
+        if self.mode == RETRACTED:
             self.mode = SHOOT
-        
-    #what is this?           
+          
     def shut_solenoid(self):
         self.shut_solenoid = True
         
@@ -55,7 +55,6 @@ class igus_slide(object):
             return True
         else:
             return False
-        
     
     def retract(self):
         '''
@@ -122,7 +121,7 @@ class igus_slide(object):
             
             elif self.igus_limit_switch == True or not self.os_rear.Get():
                 
-                #checks if slide is all the way pulled back, and makes sure solenoid is off/closed
+                #checks if slide is all the way pulled back
                 self.igus_motor_value = 0
                 self.mode = RETRACTED
             
