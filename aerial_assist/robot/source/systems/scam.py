@@ -23,6 +23,8 @@ LOADING_ANGLE = 0
 SHOOTING_ANGLE = 1
 PASSING_ANGLE = 0
 HAS_PASSED_TIME = 1
+'''approx value not tested'''
+PROPORTION_VALUE = 7.5
 
 #positions for scam angle
 LOADING = 0 #todo: put actual value here, float I think between 0 - 1
@@ -53,14 +55,6 @@ class scam(object):
         self.mode = None
         self.l_actuator_val = None
         self.has_passed_timer = wpilib.Timer
-        
-    def set_scam(self, val):
-        '''
-            function: sets l_actuator_val to the desired position
-            
-            variable: val - maybe desired position or desired speed of the l_actuator 
-        '''
-        self.l_actuator_val = val
     
     def pass_mode(self):
         if not self.mode == SET_PASS_MODE:
@@ -94,20 +88,42 @@ class scam(object):
             self.set_scam(SHOOTING_ANGLE)
             self.ball_roller.set(self.ball_roller.OFF)
             self.mode = SET_SHOOT_MODE
+
+    def set_scam_angle(self, d_angle):
+    ''' 
+        Sets the platform to the desire length
+    '''
+        #d_angle is physical angle we want
+        #lenth is the desired extension of the linear actuator
+        #pot_value is the desired potentiometer value
+        #Doesn't work past 90 but we can't reach that anyways
+        length = (d_angle - 63.14478794) / -16.6139526
+        pot_value = length * PROPORTION_VALUE
+        
+        #sets the pot angle to be used in update to actually set the motor
+        self.l_actuator_val = pot_value
+
+    def set_scam_speed(self, d_speed):
+        #d_speed is the desired speed of the linear actuator.
+        #Will be used for maunal control
+        
+        self.l_actuator_val = d_speed
             
     def scam_in_postion(self, d_angle):
         '''
             Compares current scam position to the expected position
         '''
         #d_angle is physical angle we want
-        #fixed_d_angle is the potentiometer setting
-        self.d_angle = d_angle
-        fixed_d_angle = (63.14478794 + d_angle) / -16.6139526
+        #lenth is the desired extension of the linear actuator
+        #pot_value is the desired potentiometer value
+        #Doesn't work past 90 but we can't reach that anyways
+        length = (d_angle - 63.14478794) / -16.6139526
+        pot_value = length * PROPORTION_VALUE
         
-        if self.l_actuator.GetPosition() == fixed_d_angle:
+        if self.l_actuator.GetPosition() <= pot_value + OFFSET or
+        self.l_actuator.GetPosition() >= pot_value + OFFSET:
             return True
         else:
-            self.l_actuator.Set(fixed_d_angle_
             return False
         
         '''       
@@ -167,11 +183,10 @@ class scam(object):
             
             else:
                 self.ball_roller.set(self.ball_roller.OUT)
-                
-        self.l_actuator.Set(self.angle)
+        #sets the linaer actuator to desired speed or angle depending on the functon called        
+        self.l_actuator.Set(self.l_actuator_val)
         
         #update all our components here need updated
-        self.l_actuator.update()
         self.ball_roller.update()
         self.igus_slide.update()
         
