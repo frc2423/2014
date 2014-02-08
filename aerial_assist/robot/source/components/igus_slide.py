@@ -9,6 +9,7 @@ SHOOTING = 1 #in the process of shooting
 SHOT = 2
 RETRACT = 3
 RETRACTED = 4
+MANUAL_CONTROL = 5
 
 #Constants not definite values yet
 BALL_LAUNCHED_DISTANCE = 1
@@ -21,10 +22,10 @@ class igus_slide(object):
         controls the igus_slide winch
         motors and sensors:
             igus_motor                 for pulling back the ball
-            os_rear                    used to know when the slide is all the way bacl
+            os_rear                    used to know when the slide is all the way back
             ls_retracted             make sure the slide is is_retracted, used when os_rear fails
-            igus_solenoid            to use the winch quick release it is a DoubleSolenoid
-            igus_distance sensor    for detecting if ball is in the correct position
+            igus_solenoid            to use the winch quick release; it is a DoubleSolenoid
+            igus_distance sensor    for detecting if shuttle is in the correct position
     '''
     def __init__(self, igus_motor, igus_limit_switch, igus_solenoid, igus_distance, os_rear):
 
@@ -67,7 +68,7 @@ class igus_slide(object):
         '''
             determines if we have shot already
         '''
-        #slide is past expected shooting distance
+            #slide is past expected shooting distance
         if self.igus_distance.Get() >= BALL_LAUNCHED_DISTANCE:
             #shuttle has been far enough away for long enough time 
             if self.has_shot_timer.HasPeriodPassed(HAS_SHOT_TIME):
@@ -106,7 +107,7 @@ class igus_slide(object):
             self.has_ball_timer.Stop()
             self.has_ball_timer.Reset()
             return False
-        
+    
     def update(self):
         '''
             Updates the igus_slide and any other components that are part of it

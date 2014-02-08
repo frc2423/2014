@@ -72,7 +72,7 @@ class MyRobot(wpilib.SimpleRobot):
                 l_actuator.Set(-.8)
             
             else:
-                    l_actuator.Set(0)
+                l_actuator.Set(0)
                     
             if joystick.GetRawButton(11):
                 next_state = CLIMB

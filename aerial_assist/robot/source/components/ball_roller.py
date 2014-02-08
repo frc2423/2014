@@ -3,15 +3,10 @@ try:
 except ImportError:
     from pyfrc import wpilib
 
-    #States
-    OFF = 0
-    IN = 1
-    OUT = 2
-
-    #Constants
-    IN = 1
-    OUT = -1
-    OFF = 0
+#Constants
+IN = 1
+OUT = -1
+OFF = 0
     
 class ball_roller():
 
@@ -22,7 +17,6 @@ class ball_roller():
     '''
 
     def __init__(self, ball_roller_motor):
-        
         self.ball_roller_motor = ball_roller_motor
 
     def set(self, direction):
