@@ -95,14 +95,20 @@ class scam(object):
             self.ball_roller.set(self.ball_roller.OFF)
             self.mode = SET_SHOOT_MODE
             
-    def scam_in_postion(self, position):
+    def scam_in_postion(self, d_angle):
         '''
             Compares current scam position to the expected position
         '''
-        if self.l_actuator.GetPosition() == position:
+        #d_angle is physical angle we want
+        #fixed_d_angle is the potentiometer setting
+        self.d_angle = d_angle
+        fixed_d_angle = (63.14478794 + d_angle) / -16.6139526
+        
+        if self.l_actuator.GetPosition() == fixed_d_angle:
             return True
         else:
-            return True
+            self.l_actuator.Set(fixed_d_angle_
+            return False
         
         '''       
             Look at the diffrence of this code and your originals
