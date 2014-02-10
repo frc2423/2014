@@ -77,6 +77,9 @@ class MyRobot(wpilib.SimpleRobot):
             #
             #Scam modes
             #
+            
+            #what happens if I click all of these?
+            
             if joystick.GetRawButton(1): #todo: find actual button
                 scam.load_mode()
                 
@@ -91,6 +94,9 @@ class MyRobot(wpilib.SimpleRobot):
             #
             #Manual over ride
             #
+            
+            #what is this what do you mean, GetTrigger gets a bool no a value
+            #also, if let go of the button then I will just go into the other modes
             if joystick.GetTrigger() < TRIGGER_THRESHOLD * -1:
                 right_y_axis = joystick.GetZ() #todo: find the actual function
                 scam.set_scam(right_y_axis)
