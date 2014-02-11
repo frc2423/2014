@@ -32,12 +32,11 @@ SHOOTING = 1 #todo: put actual value here, float I think between 0 - 1
 PASSING = 0 #todo: put actual value here, float I think between 0 - 1
 class scam(object):
     
-    def __init__(self, l_actuator, igus_slide, ball_roller, ls_loading):
+    def __init__(self, l_actuator, igus_slide, ball_roller):
         
         '''
            Controls the 4 bar linkage with the linear actuator
            
-           os_rear            to stop the slide when it is all the way retracted
            ls_loading         used to know when the slide is all the way down
            l_actuator         linear actuator controls the 4 bar linkage - has a potentiometer attached to it
            igus_slide         instance of the igus_slide, controls the winch
@@ -47,7 +46,6 @@ class scam(object):
            
            l_actuator_val     value to set the l_actuator position, maybe speed or position
         '''
-        self.ls_loading = ls_loading
         self.l_actuator = l_actuator    
         #self.l_actuator_pot = scam_pot -  pot connected straight to the jag
         self.igus_slide = igus_slide
@@ -90,9 +88,9 @@ class scam(object):
             self.mode = SET_SHOOT_MODE
 
     def set_scam_angle(self, d_angle):
-    ''' 
-        Sets the platform to the desire length
-    '''
+        ''' 
+            Sets the platform to the desire length
+        '''
         #d_angle is physical angle we want
         #lenth is the desired extension of the linear actuator
         #pot_value is the desired potentiometer value
@@ -174,7 +172,7 @@ class scam(object):
         #code that deals with loading and loading transition states
         
         if self.mode == SET_LOAD_MODE:
-            if self.ls_loading.Get() or self.scam_in_position(LOADING):
+            if self.l_actuator.GetForwardLimitOK() or self.scam_in_position(LOADING):
                 self.mode = LOAD_MODE
         
         if self.mode == LOAD_MODE:

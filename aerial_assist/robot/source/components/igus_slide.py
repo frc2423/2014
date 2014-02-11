@@ -21,24 +21,28 @@ class igus_slide(object):
     '''
         controls the igus_slide winch
         motors and sensors:
-            igus_motor                 for pulling back the ball
-            os_rear                    used to know when the slide is all the way back
-            ls_retracted             make sure the slide is is_retracted, used when os_rear fails
+            igus_motor                 for pulling back the shuttle, it has a forward limit switch
+            ls_retracted             make sure the slide is is_retracted
             igus_solenoid            to use the winch quick release; it is a DoubleSolenoid
             igus_distance sensor    for detecting if shuttle is in the correct position
+            os_ball                 optical switch for ball detection, used only in loading mode
     '''
-    def __init__(self, igus_motor, igus_limit_switch, igus_solenoid, igus_distance, os_rear):
+    def __init__(self, igus_motor, igus_limit_switch, igus_solenoid, igus_distance, os_ball):
 
 
         self.igus_motor = igus_motor
-        self.igus_limit_switch = igus_limit_switch
         self.igus_solenoid = igus_solenoid
         self.igus_distance = igus_distance
-        self.os_rear = os_rear
+        #what is this?
         self.shut_solenoid = False
+        
+        #timer for how long we have had the ball under the 
         self.has_ball_timer = wpilib.Timer()
+        #timer for how time
         self.has_shot_timer = wpilib.Timer()
         self.igus_motor_value = 0
+        
+        self.os_ball = os_ball
         
     def shoot(self):
         '''
@@ -91,7 +95,7 @@ class igus_slide(object):
             shooting mode
         '''
         #sensor is off meaning that there is something over the sensor
-        if not self.os_front.Get():
+        if not self.os_ball.Get():
             #something has been over the sensor for at lease HAS_BALL_TIME,
             # lets assume that its actually a ball
             if self.has_ball_timer.HasPeriodPassed(HAS_BALL_TIME):
@@ -116,11 +120,11 @@ class igus_slide(object):
         if self.mode == RETRACT:
             
             #pulls back the slide until it hits the limit switch
-            if self.ls_retracted.Get() == False or self.os_rear.Get():
+            if self.ls_retracted.Get() == False:
     
                 self.igus_motor_value = RETRACT_SPEED
             
-            elif self.igus_limit_switch == True or not self.os_rear.Get():
+            elif self.igus_limit_switch == True:
                 
                 #checks if slide is all the way pulled back
                 self.igus_motor_value = 0
@@ -128,14 +132,14 @@ class igus_slide(object):
             
         elif self.mode == SHOOT:
             #pulls us out of gear
-            self.igus_solenoid.Set(DoubleSolenoid.Value.kForward)
+            self.igus_solenoid.Set(wpilib.DoubleSolenoid.Value.kForward)
             self.mode = SHOOTING
 
         elif self.mode == SHOOTING:
             
             #make sure ball launches fully shot 0before engaging the gear
             if self.has_shot():
-                self.igus_solenoid.Set(DoubleSolenoid.Value.kReverse)
+                self.igus_solenoid.Set(wpilib.DoubleSolenoid.Value.kReverse)
                 self.mode = SHOT
             
             

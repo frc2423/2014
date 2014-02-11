@@ -4,15 +4,15 @@ except ImportError:
     from pyfrc import wpilib
 
 #Constants
-IN = 1
-OUT = -1
-OFF = 0
+IN = wpilib.Relay.kForward
+OUT = wpilib.Relay.kReverse
+OFF = wpilib.Relay.kOff
     
 class ball_roller():
 
     '''
         Controls the wheels that roll the ball in and out
-        ball_roller_motor         the motor that controls the wheels that move the ball in and out of the robot
+        ball_roller_motor         a relay representing the ball rollers motor
          
     '''
 
