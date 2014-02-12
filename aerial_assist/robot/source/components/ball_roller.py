@@ -8,7 +8,7 @@ IN = wpilib.Relay.kForward
 OUT = wpilib.Relay.kReverse
 OFF = wpilib.Relay.kOff
     
-class ball_roller():
+class BallRoller(object):
 
     '''
         Controls the wheels that roll the ball in and out

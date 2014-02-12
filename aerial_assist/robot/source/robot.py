@@ -48,8 +48,8 @@ solenoid2 = 2
 
 #relay channels
 compressorRelayChannel = 1
-camera_led_relay = 2
-ball_roller_relay = 3
+camera_led_relay_port = 2
+ball_roller_relay_port = 3
 
 #Joystick channel
 joystick_channel = 1
@@ -89,10 +89,11 @@ double_solenoid = wpilib.DoubleSolenoid(solenoid1, solenoid2)
 compressor = wpilib.Compressor(pressureSwitchChannel, compressorRelayChannel)
 
 # relay
-camera_led = wpilib.Relay(camera_led_relay)
+camera_led = wpilib.Relay(camera_led_relay_port)
 camera_led.Set(wpilib.Relay.kForward)
 
-ball_roller_relay = wpilib.Relay(b)
+ball_roller_relay = wpilib.Relay(ball_roller_relay_port)
+
 #Joystick
 joystick = wpilib.Joystick(joystick_channel)
 
@@ -101,6 +102,9 @@ shuttle_distance_sensor = GenericDistanceSensor(shuttle_optical)
 ball_detector = wpilib.DigitalInput(ball_optical)
 shuttle_detector = wpilib.DigitalInput(shuttle_optical)
 
+#states to know if we want to go back to previous state
+trig_pressed = False
+last_state = None
 
 class MyRobot(wpilib.SimpleRobot):
     
@@ -173,10 +177,14 @@ class MyRobot(wpilib.SimpleRobot):
             
             #what is this what do you mean, GetTrigger gets a bool no a value
             #also, if let go of the button then I will just go into the other modes
-            if joystick.GetTrigger() < TRIGGER_THRESHOLD * -1:
+            if joystick.GetTrigger():
                 right_y_axis = joystick.GetZ() #todo: find the actual function
                 scam.set_scam(right_y_axis)
-            
+                
+                
+            if not joystick.GetTrigger() and trig_pressed:
+                
+                
             if joystick.GetRawButton(6): #todo: find actual button
                 igus_slide.retract()
                 

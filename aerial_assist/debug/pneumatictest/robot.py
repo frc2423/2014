@@ -76,30 +76,30 @@ class MyRobot(wpilib.SimpleRobot):
                     
             if joystick.GetRawButton(11):
                 next_state = CLIMB
-                print("test")
+                
             elif joystick.GetRawButton(10):
                 next_state = LOWER
-                print("test2")
+                
             
             if next_state is not None and next_state != current_state:
-                print("test3")
+                
                 current_state = next_state
                 next_state = None
         
         # idle state: don't engage either solenoid
             if current_state is None:
-                print("test4")
+                
                 valve1.Set(False)
                 valve2.Set(False)
             else:
         
                 if current_state == CLIMB:
                     valve1.Set(False)
-                    print("test5")
+                    
                     valve2.Set(True)
                 else:
                     valve1.Set(True)
-                    print("test6")
+                    
                     valve2.Set(False)
             delay.wait()
         compressor.Stop()

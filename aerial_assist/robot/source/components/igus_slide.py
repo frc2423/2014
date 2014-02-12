@@ -17,7 +17,7 @@ RETRACT_SPEED = -1
 HAS_BALL_TIME = 1
 HAS_SHOT_TIME = 1    
 
-class igus_slide(object):
+class IgusSlide(object):
     '''
         controls the igus_slide winch
         motors and sensors:
