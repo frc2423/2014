@@ -27,12 +27,11 @@ class igus_slide(object):
             igus_distance sensor    for detecting if shuttle is in the correct position
             os_ball                 optical switch for ball detection, used only in loading mode
     '''
-    def __init__(self, igus_motor, igus_limit_switch, igus_solenoid, igus_distance, os_ball):
+    def __init__(self, igus_motor, igus_solenoid, igus_distance, os_ball):
 
-
+#All limit switches are atttached to jaguars
         self.igus_motor = igus_motor
         self.igus_solenoid = igus_solenoid
-        self.igus_distance = igus_distance
         #what is this?
         self.shut_solenoid = False
         
@@ -119,12 +118,15 @@ class igus_slide(object):
         
         if self.mode == RETRACT:
             
-            #pulls back the slide until it hits the limit switch
+            #pulls back the slide until it hits the limit
             if self.ls_retracted.Get() == False:
     
                 self.igus_motor_value = RETRACT_SPEED
-            
-            elif self.igus_limit_switch == True:
+
+
+            #GetForwardLimitOK gets the value of the limit switch from the CANJaguar.
+            #Motor allowed to run forward when True
+            elif self.igus_motor.GetForwardLimitOK == False:
                 
                 #checks if slide is all the way pulled back
                 self.igus_motor_value = 0
