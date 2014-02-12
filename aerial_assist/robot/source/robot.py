@@ -160,36 +160,48 @@ class MyRobot(wpilib.SimpleRobot):
             
             #what happens if I click all of these?
             
+            if joystick.GetRawButton(3): #todo: find actual button
+                Scam.load_mode()
+                
             if joystick.GetRawButton(1): #todo: find actual button
-                scam.load_mode()
+                Scam.pass_mode()
                 
             if joystick.GetRawButton(2): #todo: find actual button
-                scam.pass_mode()
+                Scam.shoot_mode()
                 
-            if joystick.GetRawButton(3): #todo: find actual button
-                scam.shoot_mode()
-                
-            if joystick.GetTrigger() > TRIGGER_THRESHOLD:
-                igus_slide.shoot()
+            if joystick.GetRawButton(8):
+                IgusSlide.shoot()
             #
             #Manual over ride
             #
             
             #what is this what do you mean, GetTrigger gets a bool no a value
             #also, if let go of the button then I will just go into the other modes
-            if joystick.GetTrigger():
+            if joystick.GetRawButton(7):
+                if last_state == None:
+                    last_state = Scam.get_state
                 right_y_axis = joystick.GetZ() #todo: find the actual function
-                scam.set_scam(right_y_axis)
+                Scam.set_scam(right_y_axis)
+                trig_pressed = True
                 
-                
-            if not joystick.GetTrigger() and trig_pressed:
-                
-                
+            if not joystick.GetRawButton(7) and trig_pressed:
+                if last_state == Scam.SHOOT_MODE:
+                    Scam.shoot_mode()
+                    
+                if last_state == Scam.LOAD_MODE:
+                    Scam.shoot_mode()
+                    
+                if last_state == Scam.PASS_MODE:
+                    Scam.pass_mode()
+                    
+                last_state = None
+                trig_pressed = False
+                                
             if joystick.GetRawButton(6): #todo: find actual button
-                igus_slide.retract()
+                IgusSlide.retract()
                 
             if joystick.GetRawButton(5): #todo: find actual button
-                ball_roller.ball_roller.set(ball_roller.OUT)
+                BallRoller.ball_roller.set(BallRoller.OUT)
 def run():
     
     # this is initialized in StartCompetition, but one of our

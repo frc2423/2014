@@ -55,7 +55,15 @@ class Scam(object):
         self.has_passed_timer = wpilib.Timer
         
     def get_mode(self):
-        return self.mode
+        if self.mode == SET_PASS_MODE or self.mode == PASS_MODE:
+            return PASS_MODE
+        
+        elif self.mode == SET_LOAD_MODE or self.mode == LOAD_MODE:
+            return LOAD_MODE
+        
+        elif self.mode == SET_SHOOT_MODE or self.mode == SHOOT_MODE:
+            return SHOOT_MODE
+        
     
     def pass_mode(self):
         if not self.mode == SET_PASS_MODE:
