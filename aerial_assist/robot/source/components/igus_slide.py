@@ -29,7 +29,7 @@ class igus_slide(object):
     '''
     def __init__(self, igus_motor, igus_solenoid, igus_distance, os_ball):
 
-#All limit switches are atttached to jaguars
+        #All limit switches are atttached to jaguars so thaat no longer exists
         self.igus_motor = igus_motor
         self.igus_solenoid = igus_solenoid
         #what is this?
@@ -124,7 +124,7 @@ class igus_slide(object):
                 self.igus_motor_value = RETRACT_SPEED
 
 
-            #GetForwardLimitOK gets the value of the limit switch from the CANJaguar.
+            #GetForwardLimitOK gets the state of the limit switch from the CANJaguar.
             #Motor allowed to run forward when True
             elif self.igus_motor.GetForwardLimitOK == False:
                 
@@ -139,7 +139,7 @@ class igus_slide(object):
 
         elif self.mode == SHOOTING:
             
-            #make sure ball launches fully shot 0before engaging the gear
+            #make sure ball launches fully shot before engaging the gear
             if self.has_shot():
                 self.igus_solenoid.Set(wpilib.DoubleSolenoid.Value.kReverse)
                 self.mode = SHOT
