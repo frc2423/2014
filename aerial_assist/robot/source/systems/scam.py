@@ -30,7 +30,7 @@ PROPORTION_VALUE = 7.5
 LOADING = 0 #todo: put actual value here, float I think between 0 - 1
 SHOOTING = 1 #todo: put actual value here, float I think between 0 - 1
 PASSING = 0 #todo: put actual value here, float I think between 0 - 1
-class scam(object):
+class Scam(object):
     
     def __init__(self, l_actuator, igus_slide, ball_roller):
         
@@ -53,6 +53,9 @@ class scam(object):
         self.mode = None
         self.l_actuator_val = None
         self.has_passed_timer = wpilib.Timer
+        
+    def get_mode(self):
+        return self.mode
     
     def pass_mode(self):
         if not self.mode == SET_PASS_MODE:
