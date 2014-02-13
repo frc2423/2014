@@ -7,7 +7,7 @@
 try:
     from wpilib import CANJaguar
 except ImportError:
-    from fake_wpilib import CANJaguar
+    from pyfrc.wpilib import CANJaguar
 
 
 class EzCANJaguar(CANJaguar):

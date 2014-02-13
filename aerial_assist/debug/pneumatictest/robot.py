@@ -14,7 +14,11 @@ compressor_relay = 1
 compressor_switch = 5
 compressor = wpilib.Compressor(compressor_switch, compressor_relay)
 shuttle_motor = wpilib.Jaguar(shuttle_motor_channel)
-l_actuator = wpilib.Jaguar(l_actuator_channel)
+l_actuator = wpilib.CANJaguar(l_actuator_channel, wpilib.CANJaguar.kPercentVbus)
+l_actuator.SetPositionReference(wpilib.CANJaguar.kPosRef_Potentiometer)
+l_actuator.ConfigPotentiatorTurns(1)
+l_actuator.ConfigNeutralMode(wpilib.CANJaguar.kNeutralMode_Coast)
+l_actuator.SetPID(-3000.0, -0.1, -14.0)
 valve1 = wpilib.Solenoid(valve1_channel)
 valve2 = wpilib.Solenoid(valve2_channel)
 CONTROL_LOOP_WAIT_TIME = 0.025
@@ -25,7 +29,7 @@ current_state = None
 class MyRobot(wpilib.SimpleRobot):
     def __init__(self):
         wpilib.SimpleRobot.__init__(self)
-
+        self.sd = wpilib.SmartDashboard
     def RobotInit(self):
         pass
 
@@ -70,10 +74,12 @@ class MyRobot(wpilib.SimpleRobot):
                 
             elif joystick.GetRawButton(7):
                 l_actuator.Set(-.8)
+                
+            self.sd.PutNumber("Actuator pot:", l_actuator.Get_Position)
             
             else:
                 l_actuator.Set(0)
-                    
+
             if joystick.GetRawButton(11):
                 next_state = CLIMB
                 
