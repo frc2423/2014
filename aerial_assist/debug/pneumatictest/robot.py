@@ -3,32 +3,49 @@ try:
 except ImportError:
     from pyfrc import wpilib
 
-from delay import PreciseDelay
+from common.delay import PreciseDelay
+from common.generic_distance_sensor import GenericDistanceSensor, MB10X3
 
+
+shuttle_limit = 1
+ball_optical = 2
+shuttle_optical = 3
 joystick = wpilib.Joystick(1)
-shuttle_motor_channel = 2
-l_actuator_channel = 1
+shuttle_motor_channel = 1
+l_actuator_channel = 2
 valve1_channel = 2
 valve2_channel = 1
 compressor_relay = 1
-compressor_switch = 5
+compressor_switch = 2
 compressor = wpilib.Compressor(compressor_switch, compressor_relay)
-shuttle_motor = wpilib.Jaguar(shuttle_motor_channel)
+shuttle_motor = wpilib.CANJaguar(shuttle_motor_channel, wpilib.CANJaguar.kPercentVbus)
+shuttle_motor.ConfigNeutralMode(wpilib.CANJaguar.kNeutralMode_Coast)
 l_actuator = wpilib.CANJaguar(l_actuator_channel, wpilib.CANJaguar.kPercentVbus)
 l_actuator.SetPositionReference(wpilib.CANJaguar.kPosRef_Potentiometer)
 l_actuator.ConfigPotentiatorTurns(1)
 l_actuator.ConfigNeutralMode(wpilib.CANJaguar.kNeutralMode_Coast)
 l_actuator.SetPID(-3000.0, -0.1, -14.0)
+ball_roller_relay = wpilib.Relay(2)
 valve1 = wpilib.Solenoid(valve1_channel)
 valve2 = wpilib.Solenoid(valve2_channel)
 CONTROL_LOOP_WAIT_TIME = 0.025
 next_state = None
 current_state = None
-
+front_left_jag =  wpilib.Jaguar(5)
+front_right_jag = wpilib.Jaguar(6)
+back_left_jag =   wpilib.Jaguar(3)
+back_right_jag =  wpilib.Jaguar(4)
+shuttle_distance_sensor = GenericDistanceSensor(shuttle_optical)
+ball_detector = wpilib.DigitalInput(ball_optical)
+shuttle_detector = wpilib.DigitalInput(shuttle_optical)
+shuttle_dist = GenericDistanceSensor(1)
+front_dist_one = GenericDistanceSensor(2)
+front_dist_two = GenericDistanceSensor(3)
 
 class MyRobot(wpilib.SimpleRobot):
     def __init__(self):
         wpilib.SimpleRobot.__init__(self)
+        robot_drive = wpilib.RobotDrive(front_left_jag, back_left_jag, front_right_jag, back_right_jag)
         self.sd = wpilib.SmartDashboard
     def RobotInit(self):
         pass
@@ -75,11 +92,28 @@ class MyRobot(wpilib.SimpleRobot):
             elif joystick.GetRawButton(7):
                 l_actuator.Set(-.8)
                 
-            self.sd.PutNumber("Actuator pot:", l_actuator.Get_Position)
-            
             else:
-                l_actuator.Set(0)
+                ball_roller_relay.Set(0)
+                
+            self.sd.PutNumber("Actuator pot:", l_actuator.Get_Position)
 
+            
+                
+                
+            if joystick.GetRawButton(4):
+                ball_roller_relay.Set(1)
+                ball_status = "forward"
+                
+            elif joystick.GetRawButton(5):
+                ball_roller_relay.Set(-1)
+                ball_status = "backward"
+            else:
+                ball_roller_relay.Set(0)
+                ball_status = "off"
+                
+            self.sd.PutString("Ball roller status:", ball_status)
+                
+            
             if joystick.GetRawButton(11):
                 next_state = CLIMB
                 
@@ -92,21 +126,43 @@ class MyRobot(wpilib.SimpleRobot):
                 current_state = next_state
                 next_state = None
         
-        # idle state: don't engage either solenoid
+            if not shuttle_detector:
+                self.sd.PutBoolean("Shuttle detector", True)
+        
+            if shuttle_detector:
+                self.sd.PutBoolean("Shuttle detector", False)
+            
+            if not ball_detector:
+                self.sd.PutBoolean("Ball detector", True)
+        
+            if ball_detector:
+                self.sd.PutBoolean("Ball detector", False)
+            
+            if not shuttle_optical:
+                self.sd.PutBoolean("Shuttle optical", True)
+        
+            if shuttle_optical:
+                self.sd.PutBoolean("Shuttle optical", False)
+            
+            self.sd.PutNumber("Shuttle Distance", shuttle_dist.GetDistance())
+            self.sd.PutNumber("Front distance one", front_dist_two.GetDistance())
+            self.sd.PutNumber("Front distance two", front_dist_one.GetDistance())
+        
+            # idle state: don't engage either solenoid
             if current_state is None:
                 
                 valve1.Set(False)
                 valve2.Set(False)
-            else:
-        
-                if current_state == CLIMB:
-                    valve1.Set(False)
-                    
-                    valve2.Set(True)
                 else:
-                    valve1.Set(True)
+        
+            if current_state == CLIMB:
+                valve1.Set(False)
                     
-                    valve2.Set(False)
+                valve2.Set(True)
+            else:
+                valve1.Set(True)
+                    
+                valve2.Set(False)
             delay.wait()
         compressor.Stop()
         
