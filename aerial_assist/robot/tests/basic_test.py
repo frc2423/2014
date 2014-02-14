@@ -18,8 +18,6 @@ def test_operator_control(robot, wpilib):
     
         loop_count = 0
         
-        stick_prev = 0
-        
         def IsOperatorControl(self):
             '''
                 Continue operator control for 1000 control loops
@@ -28,8 +26,7 @@ def test_operator_control(robot, wpilib):
             
             
             return not self.loop_count == 1000
-    
-    wpilib.internal.set_test_controller(TestController)
+
     wpilib.internal.enabled = True
     
     robot.OperatorControl()
