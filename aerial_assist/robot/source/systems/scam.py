@@ -26,6 +26,7 @@ HAS_PASSED_TIME = 1
 '''approx value not tested'''
 PROPORTION_VALUE = 7.5
 
+OFFSET = 1
 #positions for scam angle
 LOADING = 0 #todo: put actual value here, float I think between 0 - 1
 SHOOTING = 1 #todo: put actual value here, float I think between 0 - 1
@@ -37,7 +38,6 @@ class Scam(object):
         '''
            Controls the 4 bar linkage with the linear actuator
            
-           ls_loading         used to know when the slide is all the way down
            l_actuator         linear actuator controls the 4 bar linkage - has a potentiometer attached to it
            igus_slide         instance of the igus_slide, controls the winch
            ball_roller        instance of the ball_roller, moves the balls on and off the slide
@@ -55,34 +55,26 @@ class Scam(object):
         self.has_passed_timer = wpilib.Timer
         
     def get_mode(self):
-        if self.mode == SET_PASS_MODE or self.mode == PASS_MODE:
-            return PASS_MODE
-        
-        elif self.mode == SET_LOAD_MODE or self.mode == LOAD_MODE:
-            return LOAD_MODE
-        
-        elif self.mode == SET_SHOOT_MODE or self.mode == SHOOT_MODE:
-            return SHOOT_MODE
-        
+        return self.mode    
+    
+    def clear_timers(self):
+        self.igus_slide.has_shot_timer.Stop()
+        self.igus_slide.has_shot_timer.Reset()
+        self.igus_slide.has_ball_timer.Stop()
+        self.igus_slide.has_ball_timer.Reset()
     
     def pass_mode(self):
         if not self.mode == SET_PASS_MODE:
-            self.igus_slide.has_shot_timer.Stop()
-            self.igus_slide.has_shot_timer.Reset()
-            self.igus_slide.has_ball_timer.Stop()
-            self.igus_slide.has_ball_timer.Reset()
-            self.igus_slide.retract()
+            self.clear_timers()
+            #igus slide position is not important to us here
             self.ball_roller.set(self.ball_roller.OUT)
             self.set_scam(PASSING_ANGLE)
             self.mode = SET_PASS_MODE
             
     def load_mode(self):
         if not self.mode == SET_LOAD_MODE:
-            self.has_passed_timer.Stop()
-            self.has_passed_timer.Reset()
-            self.igus_slide.has_shot_timer.Stop()
-            self.igus_slide.has_shot_timer.Reset()
-            self.igus_slide.retract()
+            self.clear_timers()
+            self.igus_slide.retract_load()
             self.ball_roller.set(self.ball_roller.OFF)
             self.set_scam(LOADING_ANGLE)
             self.mode = SET_LOAD_MODE
@@ -129,8 +121,8 @@ class Scam(object):
         length = (d_angle - 63.14478794) / -16.6139526
         pot_value = length * PROPORTION_VALUE
         
-        if self.l_actuator.GetPosition() <= pot_value + OFFSET or
-        self.l_actuator.GetPosition() >= pot_value + OFFSET:
+        if self.l_actuator.GetPosition() <= pot_value + OFFSET or \
+            self.l_actuator.GetPosition() >= pot_value + OFFSET:
             return True
         else:
             return False

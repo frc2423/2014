@@ -36,11 +36,13 @@ led_spi_clk = 5
 pressureSwitchChannel = 6
 
 #sensor channels analog
-mb10x3_port = 1
+shuttle_mb10x3_port = 1
+left_mb10x3_port = 2
+right_mb10x3_port = 3
 
-#CAN channels (probably not 5 and 6)
-winch_can = 5
-scam_motor_can = 6
+#CAN channels 
+igus_can = 1
+l_actuator_can = 2
 
 #solenoid channels
 solenoid1 = 1
@@ -61,8 +63,8 @@ back_left_jag =   wpilib.Jaguar(back_left_channel)
 back_right_jag =  wpilib.Jaguar(back_right_channel)
 
 #CAN jags
-#winch is operated on percent vbus no extra setup is needed
-winch_jag = EzCanJaguar(winch_can)
+#igus is operated on percent vbus no extra setup is needed
+l_actuator = EzCanJaguar(igus_can)
 
 #PID configs taken from 2013 code, similar mechanism for control, needs to be tested
 SCAM_P = -3000.0 
@@ -75,15 +77,15 @@ ANGLE_MIN_POSITION = 0
 ANGLE_MIN_ANGLE = -15
 ANGLE_MAX_ANGLE = 65
 
-scam_motor = EzCanJaguar(scam_motor_can)
-scam_motor.SetPositionReference(wpilib.CANJaguar.kPosRef_Potentiometer)
+l_actuator = EzCanJaguar(scam_motor_can)
+l_actuator.SetPositionReference(wpilib.CANJaguar.kPosRef_Potentiometer)
 #guess on number of turns, but it should be treated as one turn anyway
-scam_motor.ConfigPotentiometerTurns(1)
-scam_motor.ConfigNeutralMode(wpilib.CANJaguar.kNeutralMode_Coast)
-scam_motor.SetPID(SCAM_P, SCAM_I, SCAM_D)
+l_actuator.ConfigPotentiometerTurns(1)
+l_actuator.ConfigNeutralMode(wpilib.CANJaguar.kNeutralMode_Coast)
+l_actuator.SetPID(SCAM_P, SCAM_I, SCAM_D)
 
 #DoubleSolenoid config 
-double_solenoid = wpilib.DoubleSolenoid(solenoid1, solenoid2)
+motor_release_solenoid = wpilib.DoubleSolenoid(solenoid1, solenoid2)
 
 #Compressor
 compressor = wpilib.Compressor(pressureSwitchChannel, compressorRelayChannel)
@@ -98,7 +100,10 @@ ball_roller_relay = wpilib.Relay(ball_roller_relay_port)
 joystick = wpilib.Joystick(joystick_channel)
 
 #sensors
-shuttle_distance_sensor = GenericDistanceSensor(shuttle_optical)
+shuttle_distance_sensor = GenericDistanceSensor(shuttle_mb10x3_port, MB10X3)
+left_distance_sensor = GenericDistanceSensor(left_mb10x3_port, MB10X3)
+right_distance_sensor = GenericDistanceSensor(right_mb10x3_port, MB10X3)
+
 ball_detector = wpilib.DigitalInput(ball_optical)
 shuttle_detector = wpilib.DigitalInput(shuttle_optical)
 
@@ -117,12 +122,18 @@ class MyRobot(wpilib.SimpleRobot):
         wpilib.SimpleRobot.__init__(self)
         
         self.ds = wpilib.DriverStation.GetInstance()
+        self.sd = wpilib.SmartDashboard
         robot_drive = wpilib.RobotDrive(front_left_jag, back_left_jag, front_right_jag, back_right_jag)
 
         #create components
-        ball_roller = BallRoller()
+        self.ball_roller = BallRoller(ball_roller_relay)
+        self.igus_slide  = IgusSlide(igus_can, motor_release_solenoid, ball_detector, shuttle_detector)  
+        
+        #create systems
+        self.scam = Scam(l_actuator, self.igus_slide, self.ball_roller)
         
         
+        #
 
     def RobotInit(self):
         pass
@@ -158,19 +169,18 @@ class MyRobot(wpilib.SimpleRobot):
             #Scam modes
             #
             
-            #what happens if I click all of these?
-            
             if joystick.GetRawButton(3): #todo: find actual button
                 Scam.load_mode()
                 
-            if joystick.GetRawButton(1): #todo: find actual button
+            elif joystick.GetRawButton(1): #todo: find actual button
                 Scam.pass_mode()
                 
-            if joystick.GetRawButton(2): #todo: find actual button
+            elif joystick.GetRawButton(2): #todo: find actual button
                 Scam.shoot_mode()
                 
-            if joystick.GetRawButton(8):
+            elif joystick.GetRawButton(8):
                 IgusSlide.shoot()
+                
             #
             #Manual over ride
             #
