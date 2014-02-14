@@ -6,47 +6,72 @@ except ImportError:
 from common.delay import PreciseDelay
 from common.generic_distance_sensor import GenericDistanceSensor, MB10X3
 
-
-shuttle_limit = 1
+#digital I/Oop
 ball_optical = 2
-shuttle_optical = 3
+shuttle_optical = 1
+light_data = 4
+light_clock = 5
+compressor_switch = 6
+
+#analog
+left_distance_sensor = 2
+right_distance_sensor = 3
+shuttle_distance_sensor = 1
+
+#joystick
 joystick = wpilib.Joystick(1)
+
+#PWM
+front_left_jag =  wpilib.Jaguar(5)
+front_right_jag = wpilib.Jaguar(6)
+back_left_jag =   wpilib.Jaguar(4)
+back_right_jag =  wpilib.Jaguar(3)
+
+#can channels
 shuttle_motor_channel = 1
 l_actuator_channel = 2
-valve1_channel = 2
-valve2_channel = 1
+
+#solenoids
+valve1_channel = 1
+valve2_channel = 2
+
+#Relay
 compressor_relay = 1
-compressor_switch = 2
+ball_roller_relay = 2
+
 compressor = wpilib.Compressor(compressor_switch, compressor_relay)
 shuttle_motor = wpilib.CANJaguar(shuttle_motor_channel, wpilib.CANJaguar.kPercentVbus)
 shuttle_motor.ConfigNeutralMode(wpilib.CANJaguar.kNeutralMode_Coast)
+
+#l_actuator currently a vbus
 l_actuator = wpilib.CANJaguar(l_actuator_channel, wpilib.CANJaguar.kPercentVbus)
-l_actuator.SetPositionReference(wpilib.CANJaguar.kPosRef_Potentiometer)
-l_actuator.ConfigPotentiatorTurns(1)
-l_actuator.ConfigNeutralMode(wpilib.CANJaguar.kNeutralMode_Coast)
-l_actuator.SetPID(-3000.0, -0.1, -14.0)
-ball_roller_relay = wpilib.Relay(2)
-valve1 = wpilib.Solenoid(valve1_channel)
-valve2 = wpilib.Solenoid(valve2_channel)
+
+#l_actuator.SetPositionReference(wpilib.CANJaguar.kPosRef_Potentiometer)
+#l_actuator.ConfigPotentiatorTurns(1)
+#l_actuator.ConfigNeutralMode(wpilib.CANJaguar.kNeutralMode_Coast)
+#l_actuator.SetPID(-3000.0, -0.1, -14.0)
+
+ball_roller_relay = wpilib.Relay(ball_roller_relay)
+shooter_solenoid = wpilib.DoubleSolenoid(valve1_channel, valve2_channel)
+
 CONTROL_LOOP_WAIT_TIME = 0.025
 next_state = None
 current_state = None
-front_left_jag =  wpilib.Jaguar(5)
-front_right_jag = wpilib.Jaguar(6)
-back_left_jag =   wpilib.Jaguar(3)
-back_right_jag =  wpilib.Jaguar(4)
-shuttle_distance_sensor = GenericDistanceSensor(shuttle_optical)
+
+
 ball_detector = wpilib.DigitalInput(ball_optical)
 shuttle_detector = wpilib.DigitalInput(shuttle_optical)
-shuttle_dist = GenericDistanceSensor(1)
-front_dist_one = GenericDistanceSensor(2)
-front_dist_two = GenericDistanceSensor(3)
+
+shuttle_dist = GenericDistanceSensor(shuttle_distance_sensor, MB10X3)
+front_dist_left = GenericDistanceSensor(left_distance_sensor, MB10X3)
+front_dist_right = GenericDistanceSensor(right_distance_sensor, MB10X3)
 
 class MyRobot(wpilib.SimpleRobot):
     def __init__(self):
         wpilib.SimpleRobot.__init__(self)
         robot_drive = wpilib.RobotDrive(front_left_jag, back_left_jag, front_right_jag, back_right_jag)
         self.sd = wpilib.SmartDashboard
+        
     def RobotInit(self):
         pass
 
@@ -115,10 +140,10 @@ class MyRobot(wpilib.SimpleRobot):
                 
             
             if joystick.GetRawButton(11):
-                next_state = CLIMB
+                shooter_solenoid.Set(wpilib.DoubleSolenoid.kForward)
                 
             elif joystick.GetRawButton(10):
-                next_state = LOWER
+                shooter_solenoid.Set(wpilib.DoubleSolenoid.kReverse)
                 
             
             if next_state is not None and next_state != current_state:
@@ -126,43 +151,21 @@ class MyRobot(wpilib.SimpleRobot):
                 current_state = next_state
                 next_state = None
         
-            if not shuttle_detector:
-                self.sd.PutBoolean("Shuttle detector", True)
+
+            self.sd.PutBoolean("Shuttle detector", shuttle_detector.Get())
         
-            if shuttle_detector:
-                self.sd.PutBoolean("Shuttle detector", False)
+
+            self.sd.PutBoolean("Ball detector", ball_detector.Get())
             
-            if not ball_detector:
-                self.sd.PutBoolean("Ball detector", True)
+
+            self.sd.PutBoolean("Shuttle optical", shuttle_optical.Get())
         
-            if ball_detector:
-                self.sd.PutBoolean("Ball detector", False)
-            
-            if not shuttle_optical:
-                self.sd.PutBoolean("Shuttle optical", True)
-        
-            if shuttle_optical:
-                self.sd.PutBoolean("Shuttle optical", False)
             
             self.sd.PutNumber("Shuttle Distance", shuttle_dist.GetDistance())
-            self.sd.PutNumber("Front distance one", front_dist_two.GetDistance())
-            self.sd.PutNumber("Front distance two", front_dist_one.GetDistance())
+            self.sd.PutNumber("Front distance left", front_dist_left.GetDistance())
+            self.sd.PutNumber("Front distance right", front_dist_right.GetDistance())
         
             # idle state: don't engage either solenoid
-            if current_state is None:
-                
-                valve1.Set(False)
-                valve2.Set(False)
-                else:
-        
-            if current_state == CLIMB:
-                valve1.Set(False)
-                    
-                valve2.Set(True)
-            else:
-                valve1.Set(True)
-                    
-                valve2.Set(False)
             delay.wait()
         compressor.Stop()
         
