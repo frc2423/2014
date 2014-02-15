@@ -93,7 +93,6 @@ class MyRobot(wpilib.SimpleRobot):
         global valve1
         global valve2
         delay = PreciseDelay(CONTROL_LOOP_WAIT_TIME)
-        wpilib
         CLIMB = 0
         LOWER = 1
         compressor.Start()

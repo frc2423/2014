@@ -123,7 +123,7 @@ class MyRobot(wpilib.SimpleRobot):
         
         self.ds = wpilib.DriverStation.GetInstance()
         self.sd = wpilib.SmartDashboard
-        robot_drive = wpilib.RobotDrive(front_left_jag, back_left_jag, front_right_jag, back_right_jag)
+        self.robot_drive = wpilib.RobotDrive(front_left_jag, back_left_jag, front_right_jag, back_right_jag)
 
         #create components
         self.ball_roller = BallRoller(ball_roller_relay)
