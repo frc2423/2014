@@ -47,7 +47,7 @@ shuttle_motor.ConfigNeutralMode(wpilib.CANJaguar.kNeutralMode_Coast)
 l_actuator = wpilib.CANJaguar(l_actuator_channel, wpilib.CANJaguar.kPercentVbus)
 
 l_actuator.SetPositionReference(wpilib.CANJaguar.kPosRef_Potentiometer)
-l_actuator.ConfigPotentiatorTurns(1)
+l_actuator.ConfigPotentiometerTurns(1)
 l_actuator.ConfigNeutralMode(wpilib.CANJaguar.kNeutralMode_Coast)
 #l_actuator.SetPID(-3000.0, -0.1, -14.0)
 
@@ -102,7 +102,7 @@ class MyRobot(wpilib.SimpleRobot):
             x_axis = joystick.GetX()
             y_axis = joystick.GetY()
             twist = joystick.GetTwist()
-            self.robot_drive.MecanumDrive_Polar(y_axis, x_axis, twist)
+            robot_drive.MecanumDrive_Polar(y_axis, x_axis, twist)
             
             if joystick.GetRawButton(7):
                 shuttle_motor.Set(.8)
