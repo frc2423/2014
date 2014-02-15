@@ -3,10 +3,33 @@ try:
 except ImportError:
     from pyfrc import wpilib
 
+
 from common.delay import PreciseDelay
 from common.generic_distance_sensor import GenericDistanceSensor, MB10X3
 
-#digital I/Oop
+#XBOX CONTROLLER SETUP
+XBOX_A = 1
+XBOX_B = 2
+XBOX_X = 3
+XBOX_Y = 4
+XBOX_LBUMPER = 5
+XBOX_RBUMPER = 6
+XBOX_SELECT = 7
+XBOX_START = 8
+XBOX_LEFTA_BUTTON = 9
+XBORX_RIGHTA_BUTTON = 10
+#ZAXIS is controlled but the two triggers
+#AXIS 4 and 5 are Right axis 
+#D_PAD IS CONTROLLED BY axis 6
+#axises
+XBOX_LEFTX  = 1
+XBOX_LEFTY = 2
+XBOX_RIGHTX = 3
+XBOX_RIGHTY = 4
+XBOX_TRIGGER = 5 #left is - right is +
+XBOX_DPAD =   6  #only x axis works and is 1 or -1
+
+#digital I/O
 ball_optical = 2
 shuttle_optical = 1
 light_data = 4
@@ -21,11 +44,7 @@ shuttle_distance_sensor = 1
 #joystick
 joystick = wpilib.Joystick(1)
 
-#PWM
-front_left_jag =  wpilib.Jaguar(5)
-front_right_jag = wpilib.Jaguar(6)
-back_left_jag =   wpilib.Jaguar(4)
-back_right_jag =  wpilib.Jaguar(3)
+
 
 #can channels
 shuttle_motor_channel = 1
@@ -36,42 +55,56 @@ valve1_channel = 1
 valve2_channel = 2
 
 #Relay
-compressor_relay = 1
-ball_roller_relay = 2
+compressor_relay = 6
+ball_roller_relay_port = 5
 
-compressor = wpilib.Compressor(compressor_switch, compressor_relay)
-shuttle_motor = wpilib.CANJaguar(shuttle_motor_channel, wpilib.CANJaguar.kPercentVbus)
-shuttle_motor.ConfigNeutralMode(wpilib.CANJaguar.kNeutralMode_Coast)
 
-#l_actuator currently a vbus
-l_actuator = wpilib.CANJaguar(l_actuator_channel, wpilib.CANJaguar.kPercentVbus)
 
-l_actuator.SetPositionReference(wpilib.CANJaguar.kPosRef_Potentiometer)
-l_actuator.ConfigPotentiometerTurns(1)
-l_actuator.ConfigNeutralMode(wpilib.CANJaguar.kNeutralMode_Coast)
-#l_actuator.SetPID(-3000.0, -0.1, -14.0)
-
-ball_roller_relay = wpilib.Relay(ball_roller_relay)
-shooter_solenoid = wpilib.DoubleSolenoid(valve1_channel, valve2_channel)
 
 CONTROL_LOOP_WAIT_TIME = 0.025
 next_state = None
 current_state = None
 
 
-ball_detector = wpilib.DigitalInput(ball_optical)
-shuttle_detector = wpilib.DigitalInput(shuttle_optical)
 
-shuttle_dist = GenericDistanceSensor(shuttle_distance_sensor, MB10X3)
-front_dist_left = GenericDistanceSensor(left_distance_sensor, MB10X3)
-front_dist_right = GenericDistanceSensor(right_distance_sensor, MB10X3)
+
 
 class MyRobot(wpilib.SimpleRobot):
     def __init__(self):
         wpilib.SimpleRobot.__init__(self)
-        robot_drive = wpilib.RobotDrive(front_left_jag, back_left_jag, front_right_jag, back_right_jag)
+        
+        #PWM
+        self.front_left_jag =  wpilib.Jaguar(1)
+        self.front_right_jag = wpilib.Jaguar(2)
+        self.back_left_jag =   wpilib.Jaguar(4)
+        self.back_right_jag =  wpilib.Jaguar(3)
+
+        self.robot_drive = wpilib.RobotDrive(self.front_left_jag, self.back_left_jag, self.front_right_jag, self.back_right_jag)
         self.sd = wpilib.SmartDashboard
         
+        self.ball_detector = wpilib.DigitalInput(ball_optical)
+        self.shuttle_detector = wpilib.DigitalInput(shuttle_optical)
+        
+        self.shuttle_dist = GenericDistanceSensor(shuttle_distance_sensor, MB10X3)
+        self.front_dist_left = GenericDistanceSensor(left_distance_sensor, MB10X3)
+        self.front_dist_right = GenericDistanceSensor(right_distance_sensor, MB10X3)
+        
+        self.ball_roller_relay = wpilib.Relay(ball_roller_relay_port)
+        self.shooter_solenoid = wpilib.DoubleSolenoid(valve1_channel, valve2_channel)
+        
+        self.compressor = wpilib.Compressor(compressor_switch, compressor_relay)
+        self.shuttle_motor = wpilib.CANJaguar(shuttle_motor_channel, wpilib.CANJaguar.kPercentVbus)
+        self.shuttle_motor.ConfigNeutralMode(wpilib.CANJaguar.kNeutralMode_Coast)
+        
+        #l_actuator currently a vbus
+        self.l_actuator = wpilib.CANJaguar(l_actuator_channel, wpilib.CANJaguar.kPercentVbus)
+        
+        self.l_actuator.SetPositionReference(wpilib.CANJaguar.kPosRef_Potentiometer)
+        self.l_actuator.ConfigPotentiometerTurns(1)
+        self.l_actuator.ConfigNeutralMode(wpilib.CANJaguar.kNeutralMode_Brake)
+        #l_actuator.SetPID(-3000.0, -0.1, -14.0)
+        
+        self.joystick = wpilib.Joystick(1)
     def RobotInit(self):
         pass
 
@@ -83,7 +116,7 @@ class MyRobot(wpilib.SimpleRobot):
     def Autonomous(self):
         print("MyRobot::Autonomous()")
         
-        while self.IsOperatorControl() and self.IsEnabled():
+        while self.IsAutonomous() and self.IsEnabled():
             wpilib.Wait(CONTROL_LOOP_WAIT_TIME)
             
     def OperatorControl(self):
@@ -95,47 +128,47 @@ class MyRobot(wpilib.SimpleRobot):
         delay = PreciseDelay(CONTROL_LOOP_WAIT_TIME)
         CLIMB = 0
         LOWER = 1
-        compressor.Start()
-        while self.IsOperatorControl () and self.IsEnabled():
+        self.compressor.Start()
+        wd = self.watchdog
+        wd.SetExpiration(CONTROL_LOOP_WAIT_TIME * 2)
+        wd.enabled()
+        while self.IsOperatorControl() and self.IsEnabled():
+            wd.Feed()
+            x_axis = self.joystick.GetX()
+            y_axis = -self.joystick.GetY()
+            twist = self.joystick.GetRawAxis(4)
+            self.robot_drive.MecanumDrive_Cartesian(x_axis, y_axis, twist)
             
-            x_axis = joystick.GetX()
-            y_axis = joystick.GetY()
-            twist = joystick.GetTwist()
-            robot_drive.MecanumDrive_Polar(y_axis, x_axis, twist)
-            
-            if joystick.GetRawButton(7):
-                shuttle_motor.Set(.8)
-            elif joystick.GetRawButton(5):
-                shuttle_motor.Set(-.8)
+            if self.joystick.GetRawButton(XBOX_A):
+                self.shuttle_motor.Set(-.8)
             else:
-                    shuttle_motor.Set(0)
+                self.shuttle_motor.Set(0)
             
-            
-            l_actuator.Set(joystick.GetAxis(4))
+            if self.joystick.GetRawButton(XBOX_X):
+                print("l_actuator -1")
+                self.l_actuator.Set(-1)
+            elif self.joystick.GetRawButton(XBOX_B):
+                print("l_actuator 1")
+                self.l_actuator.Set(1) 
+            else:
+                self.l_actuator.Set(0)
                 
+            self.sd.PutNumber("Actuator pot:", self.l_actuator.GetPosition())
 
                 
-            self.sd.PutNumber("Actuator pot:", l_actuator.Get_Position)
-
+            #xbox axis left and right on dpad    
+            self.ball_roller_relay.Set(joystick.GetRawAxis(5))
                 
-                
-            if joystick.GetRawButton(2):
-                ball_roller_relay.Set(-1)
-            
-            if joystick.GetRawButton(4):
-                ball_roller_relay.Set(1)
-                
-            else:
-                ball_roller_relay.Set(0)
-                
-            self.sd.PutNumber("Ball roller", joystick.GetAxis(6))
+            self.sd.PutNumber("Ball roller", self.joystick.GetRawAxis(5))
                 
             
-            if joystick.GetRawButton(8):
-                shooter_solenoid.Set(wpilib.DoubleSolenoid.kForward)
+            if joystick.GetRawButton(XBOX_LBUMPER):
+                print('kForward')
+                self.shooter_solenoid.Set(wpilib.DoubleSolenoid.kForward)
                 
-            elif joystick.GetRawButton(6):
-                shooter_solenoid.Set(wpilib.DoubleSolenoid.kReverse)
+            elif joystick.GetRawButton(XBOX_RBUMPER):
+                print('kReverse')
+                self.shooter_solenoid.Set(wpilib.DoubleSolenoid.kReverse)
                 
             
             if next_state is not None and next_state != current_state:
@@ -144,22 +177,19 @@ class MyRobot(wpilib.SimpleRobot):
                 next_state = None
         
 
-            self.sd.PutBoolean("Shuttle detector", shuttle_detector.Get())
+            self.sd.PutBoolean("Shuttle detector", bool(self.shuttle_detector.Get()))
         
 
-            self.sd.PutBoolean("Ball detector", ball_detector.Get())
-            
-
-            self.sd.PutBoolean("Shuttle optical", shuttle_optical.Get())
+            self.sd.PutBoolean("Ball detector", bool(self.ball_detector.Get()))
         
             
-            self.sd.PutNumber("Shuttle Distance", shuttle_dist.GetDistance())
-            self.sd.PutNumber("Front distance left", front_dist_left.GetDistance())
-            self.sd.PutNumber("Front distance right", front_dist_right.GetDistance())
+            self.sd.PutNumber("Shuttle Distance", self.shuttle_dist.GetDistance())
+            self.sd.PutNumber("Front distance left", self.front_dist_left.GetDistance())
+            self.sd.PutNumber("Front distance right", self.front_dist_right.GetDistance())
         
             # idle state: don't engage either solenoid
             delay.wait()
-        compressor.Stop()
+        self.compressor.Stop()
         
 def run():
     
@@ -171,3 +201,7 @@ def run():
     robot.StartCompetition()
     
     return robot
+
+if __name__ == '__main__':
+    wpilib.run()
+        

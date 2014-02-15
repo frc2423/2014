@@ -31,7 +31,7 @@ class GenericDistanceSensor(wpilib.AnalogChannel):
     # to a distance (in cm units)
     SENSOR_EQUATIONS = {
         GP2D120: lambda v: math.pow((v/11.036), -1/.947),
-        MB10X3:  lambda v: v * (5/512), #document states distance per mm is Vcc/5120 with a 5mm accuracy
+        MB10X3:  lambda v: v * (512/5), #document states distance per mm is 5120/vcc with a 5mm accuracy
                                         #this function outputs cm  
     }
     
