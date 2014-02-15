@@ -46,9 +46,9 @@ shuttle_motor.ConfigNeutralMode(wpilib.CANJaguar.kNeutralMode_Coast)
 #l_actuator currently a vbus
 l_actuator = wpilib.CANJaguar(l_actuator_channel, wpilib.CANJaguar.kPercentVbus)
 
-#l_actuator.SetPositionReference(wpilib.CANJaguar.kPosRef_Potentiometer)
-#l_actuator.ConfigPotentiatorTurns(1)
-#l_actuator.ConfigNeutralMode(wpilib.CANJaguar.kNeutralMode_Coast)
+l_actuator.SetPositionReference(wpilib.CANJaguar.kPosRef_Potentiometer)
+l_actuator.ConfigPotentiatorTurns(1)
+l_actuator.ConfigNeutralMode(wpilib.CANJaguar.kNeutralMode_Coast)
 #l_actuator.SetPID(-3000.0, -0.1, -14.0)
 
 ball_roller_relay = wpilib.Relay(ball_roller_relay)
@@ -104,45 +104,38 @@ class MyRobot(wpilib.SimpleRobot):
             twist = joystick.GetTwist()
             self.robot_drive.MecanumDrive_Polar(y_axis, x_axis, twist)
             
-            if joystick.GetRawButton(8):
+            if joystick.GetRawButton(7):
                 shuttle_motor.Set(.8)
-            elif joystick.GetRawButton(9):
+            elif joystick.GetRawButton(5):
                 shuttle_motor.Set(-.8)
             else:
                     shuttle_motor.Set(0)
             
-            if joystick.GetRawButton(6):
-                l_actuator.Set(.8)
+            
+            l_actuator.Set(joystick.GetAxis(4))
                 
-            elif joystick.GetRawButton(7):
-                l_actuator.Set(-.8)
-                
-            else:
-                ball_roller_relay.Set(0)
+
                 
             self.sd.PutNumber("Actuator pot:", l_actuator.Get_Position)
 
+                
+                
+            if joystick.GetRawButton(2):
+                ball_roller_relay.Set(-1)
             
-                
-                
             if joystick.GetRawButton(4):
                 ball_roller_relay.Set(1)
-                ball_status = "forward"
                 
-            elif joystick.GetRawButton(5):
-                ball_roller_relay.Set(-1)
-                ball_status = "backward"
             else:
                 ball_roller_relay.Set(0)
-                ball_status = "off"
                 
-            self.sd.PutString("Ball roller status:", ball_status)
+            self.sd.PutNumber("Ball roller", joystick.GetAxis(6))
                 
             
-            if joystick.GetRawButton(11):
+            if joystick.GetRawButton(8):
                 shooter_solenoid.Set(wpilib.DoubleSolenoid.kForward)
                 
-            elif joystick.GetRawButton(10):
+            elif joystick.GetRawButton(6):
                 shooter_solenoid.Set(wpilib.DoubleSolenoid.kReverse)
                 
             
