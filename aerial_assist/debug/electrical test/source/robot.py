@@ -55,7 +55,7 @@ valve1_channel = 1
 valve2_channel = 2
 
 #Relay
-compressor_relay = 6
+compressor_relay = 7
 ball_roller_relay_port = 5
 
 
@@ -94,7 +94,7 @@ class MyRobot(wpilib.SimpleRobot):
         
         self.compressor = wpilib.Compressor(compressor_switch, compressor_relay)
         self.shuttle_motor = wpilib.CANJaguar(shuttle_motor_channel, wpilib.CANJaguar.kPercentVbus)
-        self.shuttle_motor.ConfigNeutralMode(wpilib.CANJaguar.kNeutralMode_Coast)
+        self.shuttle_motor.ConfigNeutralMode(wpilib.CANJaguar.kNeutralMode_Brake)
         
         #l_actuator currently a vbus
         self.l_actuator = wpilib.CANJaguar(l_actuator_channel, wpilib.CANJaguar.kPercentVbus)
@@ -121,21 +121,17 @@ class MyRobot(wpilib.SimpleRobot):
             
     def OperatorControl(self):
         print("MyRobot::Enabled")
-        global next_state
-        global current_state
-        global valve1
-        global valve2
         delay = PreciseDelay(CONTROL_LOOP_WAIT_TIME)
         CLIMB = 0
         LOWER = 1
         self.compressor.Start()
         wd = self.watchdog
         wd.SetExpiration(CONTROL_LOOP_WAIT_TIME * 2)
-        wd.enabled()
+        wd.SetEnabled(True)
         while self.IsOperatorControl() and self.IsEnabled():
             wd.Feed()
-            x_axis = self.joystick.GetX()
-            y_axis = -self.joystick.GetY()
+            y_axis = self.joystick.GetX()
+            x_axis = -self.joystick.GetY()
             twist = self.joystick.GetRawAxis(4)
             self.robot_drive.MecanumDrive_Cartesian(x_axis, y_axis, twist)
             
@@ -156,10 +152,17 @@ class MyRobot(wpilib.SimpleRobot):
             self.sd.PutNumber("Actuator pot:", self.l_actuator.GetPosition())
 
                 
-            #xbox axis left and right on dpad    
-            self.ball_roller_relay.Set(joystick.GetRawAxis(5))
+            #xbox axis left and right on dpad 
+            if joystick.GetRawButton(XBOX_START):   
+                print(" relay set to 1")
+                self.ball_roller_relay.Set(wpilib.Relay.kForward)
+            elif joystick.GetRawButton(XBOX_SELECT):
+                print( "relay set to -1")
+                self.ball_roller_relay.Set(wpilib.Relay.kReverse)
+            else:
+                self.ball_roller_relay.Set(0)
                 
-            self.sd.PutNumber("Ball roller", self.joystick.GetRawAxis(5))
+            self.sd.PutNumber("Ball roller", int(self.joystick.GetRawAxis(6)))
                 
             
             if joystick.GetRawButton(XBOX_LBUMPER):
@@ -170,11 +173,6 @@ class MyRobot(wpilib.SimpleRobot):
                 print('kReverse')
                 self.shooter_solenoid.Set(wpilib.DoubleSolenoid.kReverse)
                 
-            
-            if next_state is not None and next_state != current_state:
-                
-                current_state = next_state
-                next_state = None
         
 
             self.sd.PutBoolean("Shuttle detector", bool(self.shuttle_detector.Get()))
@@ -186,7 +184,13 @@ class MyRobot(wpilib.SimpleRobot):
             self.sd.PutNumber("Shuttle Distance", self.shuttle_dist.GetDistance())
             self.sd.PutNumber("Front distance left", self.front_dist_left.GetDistance())
             self.sd.PutNumber("Front distance right", self.front_dist_right.GetDistance())
-        
+            
+            self.sd.PutBoolean("l_actuator FL", self.l_actuator.GetForwardLimitOK())
+            self.sd.PutBoolean("l_actuator RL", self.l_actuator.GetReverseLimitOK())
+            self.sd.PutBoolean("shuttle_motor FL", self.shuttle_motor.GetForwardLimitOK())
+            self.sd.PutBoolean("shuttle_motor RL", self.shuttle_motor.GetReverseLimitOK())
+            
+            
             # idle state: don't engage either solenoid
             delay.wait()
         self.compressor.Stop()
