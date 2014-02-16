@@ -1,15 +1,6 @@
 #    robot - This is whatever is returned from the run function in robot.py
 #    wpilib - This is the wpilib module
 
-def test_autonomous(robot, wpilib):
-    
-    wpilib.internal.enabled = True
-    robot.Autonomous()
-
-
-def test_disabled(robot):
-    robot.Disabled()
-
 
 def test_operator_control(robot, wpilib):
     

@@ -6,28 +6,7 @@ except ImportError:
 
 from common.delay import PreciseDelay
 from common.generic_distance_sensor import GenericDistanceSensor, MB10X3
-
-#XBOX CONTROLLER SETUP
-XBOX_A = 1
-XBOX_B = 2
-XBOX_X = 3
-XBOX_Y = 4
-XBOX_LBUMPER = 5
-XBOX_RBUMPER = 6
-XBOX_SELECT = 7
-XBOX_START = 8
-XBOX_LEFTA_BUTTON = 9
-XBORX_RIGHTA_BUTTON = 10
-#ZAXIS is controlled but the two triggers
-#AXIS 4 and 5 are Right axis 
-#D_PAD IS CONTROLLED BY axis 6
-#axises
-XBOX_LEFTX  = 1
-XBOX_LEFTY = 2
-XBOX_RIGHTX = 3
-XBOX_RIGHTY = 4
-XBOX_TRIGGER = 5 #left is - right is +
-XBOX_DPAD =   6  #only x axis works and is 1 or -1
+import common.logitech_controller as lt
 
 #digital I/O
 ball_optical = 2
@@ -55,7 +34,7 @@ valve1_channel = 1
 valve2_channel = 2
 
 #Relay
-compressor_relay = 7
+compressor_relay = 6
 ball_roller_relay_port = 5
 
 
@@ -104,7 +83,7 @@ class MyRobot(wpilib.SimpleRobot):
         self.l_actuator.ConfigNeutralMode(wpilib.CANJaguar.kNeutralMode_Brake)
         #l_actuator.SetPID(-3000.0, -0.1, -14.0)
         
-        self.joystick = wpilib.Joystick(1)
+        self.logitech = wpilib.Joystick(1)
     def RobotInit(self):
         pass
 
@@ -130,20 +109,20 @@ class MyRobot(wpilib.SimpleRobot):
         wd.SetEnabled(True)
         while self.IsOperatorControl() and self.IsEnabled():
             wd.Feed()
-            y_axis = self.joystick.GetX()
-            x_axis = -self.joystick.GetY()
-            twist = self.joystick.GetRawAxis(4)
+            y_axis = self.logitech.GetX()
+            x_axis = -self.logitech.GetY()
+            twist = self.logitech.GetRawAxis(4)
             self.robot_drive.MecanumDrive_Cartesian(x_axis, y_axis, twist)
             
-            if self.joystick.GetRawButton(XBOX_A):
+            if self.logitech.GetRawButton(2):
                 self.shuttle_motor.Set(-.8)
             else:
                 self.shuttle_motor.Set(0)
             
-            if self.joystick.GetRawButton(XBOX_X):
+            if self.logitech.GetRawButton(1):
                 print("l_actuator -1")
                 self.l_actuator.Set(-1)
-            elif self.joystick.GetRawButton(XBOX_B):
+            elif self.logitech.GetRawButton(3):
                 print("l_actuator 1")
                 self.l_actuator.Set(1) 
             else:
@@ -153,23 +132,23 @@ class MyRobot(wpilib.SimpleRobot):
 
                 
             #xbox axis left and right on dpad 
-            if joystick.GetRawButton(XBOX_START):   
+            if logitech.GetRawButton(lt.R_BUMMPER):   
                 print(" relay set to 1")
                 self.ball_roller_relay.Set(wpilib.Relay.kForward)
-            elif joystick.GetRawButton(XBOX_SELECT):
+            elif logitech.GetRawButton(lt.R_TRIGGER):
                 print( "relay set to -1")
                 self.ball_roller_relay.Set(wpilib.Relay.kReverse)
             else:
                 self.ball_roller_relay.Set(0)
                 
-            self.sd.PutNumber("Ball roller", int(self.joystick.GetRawAxis(6)))
+            self.sd.PutNumber("Ball roller", int(self.logitech.GetRawAxis(lt.D_PAD_AXIS_X)))
                 
             
-            if joystick.GetRawButton(XBOX_LBUMPER):
+            if logitech.GetRawButton(lt.L_BUMPER):
                 print('kForward')
                 self.shooter_solenoid.Set(wpilib.DoubleSolenoid.kForward)
                 
-            elif joystick.GetRawButton(XBOX_RBUMPER):
+            elif logitech.GetRawButton(lt.L_TRIGGER):
                 print('kReverse')
                 self.shooter_solenoid.Set(wpilib.DoubleSolenoid.kReverse)
                 

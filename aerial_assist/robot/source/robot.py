@@ -6,15 +6,18 @@ except ImportError:
 #common imports
 from common.delay import PreciseDelay
 from common.generic_distance_sensor import GenericDistanceSensor, MB10X3
-from common.ez_can_jaguar import EzCanJaguar
-
+from common.ez_can_jaguar import EzCANJaguar 
+from common.auto_jaguar import AnglePositionJaguar
+from common.modes import *
+import common.logitech_controller as lt
 
 #component imports
 from components.ball_roller import BallRoller
 from components.igus_slide import IgusSlide
+from components.scam import Scam
 
 #system imports
-from systems.scam import Scam
+from systems.robot_system import RobotSystem
 
 #Constants
 CONTROL_LOOP_WAIT_TIME = .025
@@ -23,17 +26,16 @@ TRIGGER_THRESHOLD = .25
 #Jag channels (PWM)
 front_left_channel = 1
 front_right_channel = 2
-back_left_channel = 3
-back_right_channel = 4
+back_left_channel = 4
+back_right_channel = 3
 ball_roller_motor = 5
 
 #Digital IO - TODO real values
-shuttle_limit = 1
 ball_optical = 2
-shuttle_optical = 3
+shuttle_optical = 1
 led_spi_bus = 4
 led_spi_clk = 5
-pressureSwitchChannel = 6
+compressor_switch = 6
 
 #sensor channels analog
 shuttle_mb10x3_port = 1
@@ -49,22 +51,12 @@ solenoid1 = 1
 solenoid2 = 2
 
 #relay channels
-compressorRelayChannel = 1
-camera_led_relay_port = 2
-ball_roller_relay_port = 3
+compressorRelayChannel = 6
+camera_led_relay_port = 7
+ball_roller_relay_port = 5
 
 #Joystick channel
 joystick_channel = 1
-
-#Drive jags
-front_left_jag =  wpilib.Jaguar(front_left_channel)
-front_right_jag = wpilib.Jaguar(front_right_channel)
-back_left_jag =   wpilib.Jaguar(back_left_channel)
-back_right_jag =  wpilib.Jaguar(back_right_channel)
-
-#CAN jags
-#igus is operated on percent vbus no extra setup is needed
-l_actuator = EzCanJaguar(igus_can)
 
 #PID configs taken from 2013 code, similar mechanism for control, needs to be tested
 SCAM_P = -3000.0 
@@ -72,44 +64,13 @@ SCAM_I = -0.1
 SCAM_D = -14.0
 
 #guess based on specs todo fix this based on emperical data
-ANGLE_MAX_POSITION = .7
-ANGLE_MIN_POSITION = 0
+THRESHOLD = 2 #position in degrees
+ANGLE_MAX_POSITION = 1
+ANGLE_MIN_POSITION = .2
 ANGLE_MIN_ANGLE = -15
 ANGLE_MAX_ANGLE = 65
 
-l_actuator = EzCanJaguar(scam_motor_can)
-l_actuator.SetPositionReference(wpilib.CANJaguar.kPosRef_Potentiometer)
-#guess on number of turns, but it should be treated as one turn anyway
-l_actuator.ConfigPotentiometerTurns(1)
-l_actuator.ConfigNeutralMode(wpilib.CANJaguar.kNeutralMode_Coast)
-l_actuator.SetPID(SCAM_P, SCAM_I, SCAM_D)
 
-#DoubleSolenoid config 
-motor_release_solenoid = wpilib.DoubleSolenoid(solenoid1, solenoid2)
-
-#Compressor
-compressor = wpilib.Compressor(pressureSwitchChannel, compressorRelayChannel)
-
-# relay
-camera_led = wpilib.Relay(camera_led_relay_port)
-camera_led.Set(wpilib.Relay.kForward)
-
-ball_roller_relay = wpilib.Relay(ball_roller_relay_port)
-
-#Joystick
-joystick = wpilib.Joystick(joystick_channel)
-
-#sensors
-shuttle_distance_sensor = GenericDistanceSensor(shuttle_mb10x3_port, MB10X3)
-left_distance_sensor = GenericDistanceSensor(left_mb10x3_port, MB10X3)
-right_distance_sensor = GenericDistanceSensor(right_mb10x3_port, MB10X3)
-
-ball_detector = wpilib.DigitalInput(ball_optical)
-shuttle_detector = wpilib.DigitalInput(shuttle_optical)
-
-#states to know if we want to go back to previous state
-trig_pressed = False
-last_state = None
 
 class MyRobot(wpilib.SimpleRobot):
     
@@ -121,19 +82,65 @@ class MyRobot(wpilib.SimpleRobot):
     def __init__(self):
         wpilib.SimpleRobot.__init__(self)
         
+        #initilize all basic types( sensors, motors, stuuf like that)
+        
+        #Drive jags
+        self.front_left_jag =  wpilib.Jaguar(front_left_channel)
+        self.front_right_jag = wpilib.Jaguar(front_right_channel)
+        self.back_left_jag =   wpilib.Jaguar(back_left_channel)
+        self.back_right_jag =  wpilib.Jaguar(back_right_channel)
+
+        #DoubleSolenoid config 
+        self.motor_release_solenoid = wpilib.DoubleSolenoid(solenoid1, solenoid2)
+        
+        #Compressor
+        self.compressor = wpilib.Compressor(compressor_switch, compressorRelayChannel)
+        
+        # relay
+        self.camera_led = wpilib.Relay(camera_led_relay_port)
+        self.camera_led.Set(wpilib.Relay.kForward)
+        
+        ball_roller_relay = wpilib.Relay(ball_roller_relay_port)
+        
+        #Joystick
+        self.logitech = wpilib.Joystick(joystick_channel)
+
+        #CAN jags
+        #igus is operated on percent vbus no extra setup is needed
+        self.igus_motor = EzCANJaguar(igus_can)
+        
+        #l_actuator setup
+        self.l_actuator = EzCANJaguar(l_actuator_can)
+        self.l_actuator.SetPositionReference(wpilib.CANJaguar.kPosRef_Potentiometer)
+        #guess on number of turns, but it should be treated as one turn anyway
+        self.l_actuator.ConfigPotentiometerTurns(1)
+        self.l_actuator.ConfigNeutralMode(wpilib.CANJaguar.kNeutralMode_Coast)
+        self.l_actuator.SetPID(SCAM_P, SCAM_I, SCAM_D)
+        
+        self.l_actuator_auto = AnglePositionJaguar(self.l_actuator, THRESHOLD, ANGLE_MIN_POSITION, ANGLE_MAX_POSITION, ANGLE_MIN_ANGLE, ANGLE_MAX_ANGLE)
+        
+        
+        #sensors
+        self.shuttle_distance_sensor = GenericDistanceSensor(shuttle_mb10x3_port, MB10X3)
+        self.left_distance_sensor = GenericDistanceSensor(left_mb10x3_port, MB10X3)
+        self.right_distance_sensor = GenericDistanceSensor(right_mb10x3_port, MB10X3)
+        
+        ball_detector = wpilib.DigitalInput(ball_optical)
+        shuttle_detector = wpilib.DigitalInput(shuttle_optical)
         self.ds = wpilib.DriverStation.GetInstance()
         self.sd = wpilib.SmartDashboard
-        self.robot_drive = wpilib.RobotDrive(front_left_jag, back_left_jag, front_right_jag, back_right_jag)
-
+        
+        self.robot_drive = wpilib.RobotDrive(self.front_left_jag, self.back_left_jag, self.front_right_jag, self.back_right_jag)
+        
         #create components
         self.ball_roller = BallRoller(ball_roller_relay)
-        self.igus_slide  = IgusSlide(igus_can, motor_release_solenoid, ball_detector, shuttle_detector)  
+        self.igus_slide  = IgusSlide(self.igus_motor, self.motor_release_solenoid, self.shuttle_distance_sensor, ball_detector, shuttle_detector)  
+        self.scam = Scam(self.l_actuator_auto)
+        
         
         #create systems
-        self.scam = Scam(l_actuator, self.igus_slide, self.ball_roller)
+        self.robot_system = RobotSystem( self.scam, self.igus_slide, self.ball_roller)
         
-        
-        #
 
     def RobotInit(self):
         pass
@@ -156,62 +163,58 @@ class MyRobot(wpilib.SimpleRobot):
 
             
         while self.IsOperatorControl () and self.IsEnabled():
-            
+            dog.Feed()
             #
             #Drive
             #
-            x_axis = joystick.GetX()
-            y_axis = joystick.GetY()
-            twist = joystick.GetTwist()
-            self.robot_drive.MecanumDrive_Polar(y_axis, x_axis, twist)
+            x_axis = self.logitech.GetX()
+            y_axis = -self.logitech.GetY()
+            twist = self.logitech.GetTwist()
+            self.robot_drive.MecanumDrive_Cartesian(x_axis,y_axis, twist)
             
             #
-            #Scam modes
+            #robot_system modes
             #
             
-            if joystick.GetRawButton(3): #todo: find actual button
-                Scam.load_mode()
+            #these are exclusionary
+            
+            if self.logitech.GetRawButton(2): #todo: find actual button
+                self.robot_system.set_mode(LOAD_MODE)
                 
-            elif joystick.GetRawButton(1): #todo: find actual button
-                Scam.pass_mode()
+            elif self.logitech.GetRawButton(lt.L_TRIGGER): #todo: find actual button
+                self.robot_system.set_mode(PASS_MODE)
                 
-            elif joystick.GetRawButton(2): #todo: find actual button
-                Scam.shoot_mode()
-                
-            elif joystick.GetRawButton(8):
-                IgusSlide.shoot()
-                
+            elif self.logitech.GetRawButton(lt.R_BUMPER): #todo: find actual button
+                self.robot_system.set_mode(SHOOT_MODE)
+
             #
-            #Manual over ride
+            #actions
             #
             
-            #what is this what do you mean, GetTrigger gets a bool no a value
-            #also, if let go of the button then I will just go into the other modes
-            if joystick.GetRawButton(7):
-                if last_state == None:
-                    last_state = Scam.get_state
-                right_y_axis = joystick.GetZ() #todo: find the actual function
-                Scam.set_scam(right_y_axis)
-                trig_pressed = True
-                
-            if not joystick.GetRawButton(7) and trig_pressed:
-                if last_state == Scam.SHOOT_MODE:
-                    Scam.shoot_mode()
+            #most of these can be done at the same time 
+            if self.logitech.GetRawButton(lt.R_BUMPER):
+                self.robot_system.move_scam(self.logitech.GetRawAxis(lt.R_AXIS_Y))
+            
+
+            #
+            # mode based action
+            #
+            
+            #it makes sense for some buttons to have diffrent functions in diffrent modes
+            if self.logitech.GetRawButton(lt.R_TRIGGER):
+                if self.robot_system.get_mode() == PASS_MODE:
                     
-                if last_state == Scam.LOAD_MODE:
-                    Scam.shoot_mode()
+                    #in this case this should pass the ball out of the robot
+                    self.robot_system.ball_roll(ball_roller.OUT)
+                        
                     
-                if last_state == Scam.PASS_MODE:
-                    Scam.pass_mode()
+                elif self.robot_system.get_mode() == SHOOT_MODE:
                     
-                last_state = None
-                trig_pressed = False
-                                
-            if joystick.GetRawButton(6): #todo: find actual button
-                IgusSlide.retract()
-                
-            if joystick.GetRawButton(5): #todo: find actual button
-                BallRoller.ball_roller.set(BallRoller.OUT)
+                    self.robot_system.shoot()
+                    
+            #sr todo: figure out the rest of the controls
+            
+            self.delay.wait()
 def run():
     
     # this is initialized in StartCompetition, but one of our
@@ -223,5 +226,7 @@ def run():
     
     return robot
 
+# this is used for testing
 if __name__ == '__main__':
     wpilib.run()
+    
