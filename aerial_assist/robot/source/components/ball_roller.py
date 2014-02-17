@@ -23,33 +23,26 @@ class BallRoller(object):
          
     '''
 
-    def __init__(self, ball_roller_motor, auto_mode = AUTO):
+    def __init__(self, ball_roller_motor):
         self.ball_roller_motor = ball_roller_motor
-        self.auto_mode = auto_mode
         self.direction = OFF
-        self.mode = MANUAL
-    def set_mode(self, mode):
-        '''
-            sets the expected action in the given mode
-        '''
-        if self.mode == LOAD_MODE and self.auto_mode:
-            self.mode = AUTO_LOAD
-            self.direction = IN
-        else:
-            self.mode = MANUAL
-            self.direction = OFF
+        self.sd = wpilib.SmartDashboard
             
-    def set(self, direction):
-        '''
-            if we use set we are again running the balls manually 
-        '''
-        self.direction = direction
-        self.mode = MANUAL
-
+            
+    def roll_in(self):
+        self.direction = IN
+        
+    def roll_out(self):
+        self.direction = OUT
+        
+    def off(self):
+        self.direction = OFF
+        
     def update(self):
         #print(self.direction)
         self.ball_roller_motor.Set(self.direction)
+            
+        self.sd.PutNumber("Ball Roller", self.direction)
         
-        #reset the speed if we are not in auto mode
-        if not self.mode == AUTO_LOAD:
-            self.direction = 0
+        self.direction = OFF
+        

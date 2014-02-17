@@ -5,7 +5,7 @@ except ImportError:
 
 #common imports
 from common.delay import PreciseDelay
-from common.generic_distance_sensor import GenericDistanceSensor, MB10X3
+from common.generic_distance_sensor import GenericDistanceSensor, MB10X3, GP2D120
 from common.ez_can_jaguar import EzCANJaguar 
 from common.auto_jaguar import AnglePositionJaguar
 from common.modes import *
@@ -13,6 +13,7 @@ import common.logitech_controller as lt
 
 #component imports
 from components.ball_roller import BallRoller
+import components.ball_roller as bl
 from components.igus_slide import IgusSlide
 from components.scam import Scam
 
@@ -24,15 +25,13 @@ CONTROL_LOOP_WAIT_TIME = .025
 TRIGGER_THRESHOLD = .25
 
 #Jag channels (PWM)
-front_left_channel = 1
-front_right_channel = 2
+front_left_channel = 2
+front_right_channel = 1
 back_left_channel = 4
 back_right_channel = 3
 ball_roller_motor = 5
 
-#Digital IO - TODO real values
-ball_optical = 2
-shuttle_optical = 1
+#Digital IO
 led_spi_bus = 4
 led_spi_clk = 5
 compressor_switch = 6
@@ -41,6 +40,8 @@ compressor_switch = 6
 shuttle_mb10x3_port = 1
 left_mb10x3_port = 2
 right_mb10x3_port = 3
+ball_optical = 4
+shuttle_optical =5
 
 #CAN channels 
 igus_can = 1
@@ -59,16 +60,16 @@ ball_roller_relay_port = 5
 joystick_channel = 1
 
 #PID configs taken from 2013 code, similar mechanism for control, needs to be tested
-SCAM_P = -3000.0 
-SCAM_I = -0.1 
-SCAM_D = -14.0
+SCAM_P = 3000
+SCAM_I = .1
+SCAM_D = 14
 
 #guess based on specs todo fix this based on emperical data
-THRESHOLD = 2 #position in degrees
-ANGLE_MAX_POSITION = 1
-ANGLE_MIN_POSITION = .2
-ANGLE_MIN_ANGLE = -15
-ANGLE_MAX_ANGLE = 65
+THRESHOLD = .02 #position in degrees
+ANGLE_MAX_POSITION = .757
+ANGLE_MIN_POSITION = .042
+ANGLE_MIN_ANGLE = 65
+ANGLE_MAX_ANGLE = -30
 
 
 
@@ -125,8 +126,9 @@ class MyRobot(wpilib.SimpleRobot):
         self.left_distance_sensor = GenericDistanceSensor(left_mb10x3_port, MB10X3)
         self.right_distance_sensor = GenericDistanceSensor(right_mb10x3_port, MB10X3)
         
-        ball_detector = wpilib.DigitalInput(ball_optical)
-        shuttle_detector = wpilib.DigitalInput(shuttle_optical)
+        self.ball_detector = GenericDistanceSensor(ball_optical, GP2D120)
+        self.shuttle_detector = GenericDistanceSensor(shuttle_optical, GP2D120)
+        
         self.ds = wpilib.DriverStation.GetInstance()
         self.sd = wpilib.SmartDashboard
         
@@ -134,25 +136,44 @@ class MyRobot(wpilib.SimpleRobot):
         
         #create components
         self.ball_roller = BallRoller(ball_roller_relay)
-        self.igus_slide  = IgusSlide(self.igus_motor, self.motor_release_solenoid, self.shuttle_distance_sensor, ball_detector, shuttle_detector)  
+        self.igus_slide  = IgusSlide(self.igus_motor, self.motor_release_solenoid, self.shuttle_distance_sensor, self.ball_detector, self.shuttle_detector)  
         self.scam = Scam(self.l_actuator_auto)
-        self.components = [self.ball_roller, self.igus_slide, self.scam]
         
         #create systems
         self.robot_system = RobotSystem( self.scam, self.igus_slide, self.ball_roller)
         
-        #storing modes for testing
-        self.LOAD_MODE = LOAD_MODE
-        self.PASS_MODE = PASS_MODE
-        self.SHOOT_MODE = SHOOT_MODE
+                # autonomous mode needs a dict of components
+        components = {
+            # components 
+            'ball_roller': self.ball_roller,
+            'igus_slide': self.self.igus_slide,
+            'scam': self.scam, 
+            
+            # systems
+            'robot_system': self.robot_system,
+        }
         
-        #storing components for testing
-        self.BallRoller = BallRoller
-        self.Scam = Scam
-        self.IgusSlide = IgusSlide
+        self.components = []
+        self.components = [v for v in components.values() if hasattr(v, 'update')]
+        
+        #
+        #determines if we are to automatically switch states from loading to shooting
+        #
+        
+        self.auto_load = True
+        
+        #self.operator_control_mode = OperatorControlManager(components, self.ds)
     def RobotInit(self):
         pass
         
+    def Disabled(self):
+        print("MyRobot::Disabled()")
+        
+        self.sd.PutNumber("Robot Mode", self.MODE_DISABLED)
+    
+        while self.IsDisabled():
+            wpilib.Wait(CONTROL_LOOP_WAIT_TIME)
+            
     def Autonomous(self):        
         print("MyRobot::Autonomous()")
         
@@ -168,69 +189,157 @@ class MyRobot(wpilib.SimpleRobot):
         dog = self.GetWatchdog()
         dog.SetExpiration(0.25)
         dog.SetEnabled(True)
-
+        
+        next_mode = None
             
         while self.IsOperatorControl () and self.IsEnabled():
             dog.Feed()
             #
             #Drive
             #
-            x_axis = self.logitech.GetX()
-            y_axis = -self.logitech.GetY()
-            twist = self.logitech.GetTwist()
-            self.robot_drive.MecanumDrive_Cartesian(x_axis,y_axis, twist)
-            
+            y_axis = self.logitech.GetRawAxis(lt.L_AXIS_Y)
+            twist =  self.logitech.GetRawAxis(lt.R_AXIS_X)
+            x_axis = self.logitech.GetRawAxis(lt.L_AXIS_X)
+ 
+            axes = [y_axis, twist, x_axis]
+            for axis in axes: 
+                if axis < .1:
+                    axis = 0
+                    
+            self.robot_drive.MecanumDrive_Cartesian(x_axis, y_axis, twist )
+        
             #
             #robot_system modes
             #
             
-            #these are exclusionary
-            button_two = self.logitech.GetRawButton(2)
-            l_trigger = self.logitech.GetRawButton(lt.L_TRIGGER)
-            r_bumber = self.logitech.GetRawButton(lt.R_BUMPER)
+            #
+            #these are exclusionary, change the mode based on user input
+            #if no user input check if there is a next mode and set to it
+            #if there is
+            #
+            if self.logitech.GetRawButton(1): #todo: find actual button
+                self.mode = LOAD_MODE
+                next_mode = None
+                
+            elif self.logitech.GetRawButton(2): #todo: find actual button
+                self.mode = PASS_MODE
+                next_mode = None
+                
+            elif self.logitech.GetRawButton(3): #todo: find actual button
+                self.mode =SHOOT_MODE
+                next_mode = None
             
-            if button_two: #todo: find actual button
-                self.robot_system.set_mode(LOAD_MODE)
+            elif self.next_mode != None:
+                #
+                #after setting the next mode, clear it so we dont get confused
+                #
+                self.mode = next_mode
+                self.next_mode = None
                 
-            elif l_trigger: #todo: find actual button
-                self.robot_system.set_mode(PASS_MODE)
-                
-            elif r_bumber: #todo: find actual button
-                self.robot_system.set_mode(SHOOT_MODE)
 
             #
-            #actions
+            #LOAD_MODE actions
             #
             
-            #most of these can be done at the same time 
-            if self.logitech.GetRawButton(lt.R_BUMPER):
-                self.robot_system.move_scam(self.logitech.GetRawAxis(lt.R_AXIS_Y))
-            
-
-            #
-            # mode based action
-            #
-            
-            #it makes sense for some buttons to have diffrent functions in diffrent modes
-            if self.logitech.GetRawButton(lt.R_TRIGGER):
-                if self.robot_system.get_mode() == PASS_MODE:
+            if self.mode == LOAD_MODE:
+                #switch between if we can auto load or not
+                if self.logitech.GetRawButton(4):
+                    self.auto_load = not self.auto_load
+                
+                #
+                #Auto feed the ball
+                #
+                self.ball_roller.roll_in()
+                
+                #
+                # Set the position of the scam first do angle control, set to 0
+                # if we are already in the goal range
+                #
+                
+                self.scam.set_angle(self.scam.LOADING_ANGLE)
+                
+                # we are in position, stop using PID, were better without it
+                if self.scam.in_position():
+                    self.scam.set_speed(0)
                     
-                    #in this case this should pass the ball out of the robot
-                    self.robot_system.ball_roll(OUT)
+                #put igus into loading mode    
+                self.igus_slide.retract_load()
+                
+                #if auto load is active set our next mode
+                if(self.auto_load):
+                    if (self.igus_slide.ball_sensor_triggered):
+                        next_mode = SHOOT_MODE
                         
+                        
+            #
+            #SHOOT_MODE actions
+            #
+            if self.mode == SHOOT_MODE:
+                
+                #
+                #while we are not in position the ball rollers should keep feeding
+                #the ball in
+                #
+                
+                self.ball_roller.roll_in()
+                #
+                # Set the position of the scam first do angle control, set to 0
+                # if we are already in the goal range
+                #
+                
+                self.scam.set_angle(self.scam.SHOOTING_ANGLE)
+                
+                # we are in position, stop using PID, were better without it
+                if self.scam.in_position():
+                    self.scam.set_speed(0)
+                    #we are in position ball rollers don't need to be rolled in
+                    #any more
+                    self.ball_roller.off()
                     
-                elif self.robot_system.get_mode() == SHOOT_MODE:
+                #
+                #Retract to shooting position, if we are not already there
+                #
+                self.igus_slide.retract_shoot()
+                
+                
+                #
+                #shoot if trigger is hit, user can shoot at any point by pressing both triggers
+                #igus_slide will automatically try to shoot
+                #
+                
+                if self.logitech.GetRawButton(lt.R_TRIGGER):
+                    self.igus_slide.shoot(override = self.logitech.GetRawButton(lt.L_TRIGGER))
+                
+            
+            #
+            #PASS_MODE actions
+            #
+            if self.mode  == PASS_MODE:
+                #switch between if we can auto load or not
+                if self.logitech.GetRawButton(4):
+                    self.auto_load = not self.auto_load
+                
+                #
+                #Pass the ball by user command
+                #
+                if self.logitech.GetRawButton(lt.R_BUMMPER):
+                    self.ball_roller.roll_out()
+                
+
+                #
+                # Set the position of the scam first do angle control, set to 0
+                # if we are already in the goal range
+                #
+                
+                self.scam.set_angle(self.scam.LOADING_ANGLE)
+                
+                # we are in position, stop using PID, were better without it
+                if self.scam.in_position():
+                    self.scam.set_speed(0)
                     
-                    self.robot_system.shoot()
-                    
-            #sr todo: figure out the rest of the controls
             
-            
-            
-            #do all the robot actions
-            self.robot_system.do_auto_actions()
-            
-            
+            #update smartdashboard
+                self.sd.PutString("Robot Mode", mode_dict[self.mode])
             #update components, has to be the last thing called except wait
             self.update()
             

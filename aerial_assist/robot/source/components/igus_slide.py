@@ -17,7 +17,18 @@ RETRACT_SHOOT = 3
 RETRACTED_SHOOT = 4
 MANUAL_CONTROL = 5
 
-
+#state dict
+state_dict = {
+                SHOOT:"SHOOT",
+                SHOOTING:"SHOOTING",
+                SHOT:"SHOT",
+                RETRACT_LOAD: "RETRACT_LOAD",
+                RETRACTED_LOAD: "RETRACTED_LOAD",
+                RETRACT_SHOOT: "RETRACT_SHOOT",
+                RETRACTED_SHOOT:"RETRACTED_SHOOT",
+                MANUAL_CONTROL: "MANUAL_CONTROL",              
+                None:   "None"
+              }
 #ball states
 NO_BALL = 0
 HAS_BALL = 1
@@ -27,9 +38,13 @@ UNKNOWN = 2
 HAS_BALL = 4
 
 #Constants not definite values yet
-RETRACT_SPEED = 1
+RETRACT_SPEED = -1
 HAS_SHOT_TIME = 1.5    
 SOLENOID_SET_TIME = .5
+
+#better names for pneumatic positions
+RELEASE = wpilib.DoubleSolenoid.kForward
+ENGAGE = wpilib.DoubleSolenoid.kReverse
 class IgusSlide(object):
     '''
         controls the igus_slide winch
@@ -37,11 +52,10 @@ class IgusSlide(object):
             igus_motor                 for pulling back the shuttle, it has a forward limit switch
             igus_solenoid            to use the winch quick release; it is a DoubleSolenoid
             igus_distance sensor    for detecting if shuttle is in the correct position
-            ball_detector           optical switch for ball detection, used only in loading mode
-            shuttle_detector        optical switch to detect the shuttle, only used in loading mode
+            ball_detector           distance sensor for ball detection, used only in loading mode
+            shuttle_detector        distance sensor to detect the shuttle, only used in loading mode
     '''
-    def __init__(self, igus_motor, igus_solenoid, igus_distance, ball_detector, shuttle_detector, auto_mode = AUTO):
-
+    def __init__(self, igus_motor, igus_solenoid, igus_distance, ball_detector, shuttle_detector):
         #All limit switches are atttached to jaguars so thaat no longer exists
         self.igus_motor = igus_motor
         self.igus_solenoid = igus_solenoid
@@ -64,39 +78,23 @@ class IgusSlide(object):
         #area    
         self.has_ball_count = 0
         
-        self.auto_mode = auto_mode
+        self.sd = wpilib.SmartDashboard
         
-    def set_mode(self, mode):
-        '''
-            sets the mode of the igus_slide
-        '''
-        if self.auto_mode == AUTO:
-            if mode == SHOOT_MODE:
-                self._retract_shoot()
-                
-            elif mode == LOAD_MODE:
-                self._retract_load()
-                
-            elif mode == PASS_MODE:
-                #doesn't matter here, but _retract_load is a catch all, if we are
-                #past the point of loading we'll just go into shooting position
-                #if not well go to our loading position, if the sensor is broken
-                #well go to our shooting position.
-                self._retract_load()
+        #on init ingage solenoid
+        self.igus_solenoid.Set(ENGAGE)
             
         
-    def shoot(self):
+    def shoot(self, override = False):
         '''
             shoots the ball but only if the limit switch is hit. Unless we have
-            overridden the limitswitch if auto_mode = manual - 
-            sr todo am I sure about that? maybe some other override varaibles, or
-            another functions
+            overridden the limitswitch?
         '''
-        
-        if not self.igus_motor.GetForwardLimitOK() or self.auto_mode == MANUAL:
+        self.sd.PutBoolean("igus forwards limit", self.igus_motor.GetForwardLimitOK())
+        self.sd.PutBoolean("igus rear limit", self.igus_morot.GetReadLimitOK())
+        if not self.igus_motor.GetForwardLimitOK() or override:
             self.state = SHOOT
         
-    def _retract_load(self):
+    def retract_load(self):
         '''
             puts us in load mode, unless we are currently in shooting mode
         '''
@@ -108,7 +106,7 @@ class IgusSlide(object):
             self.next_state = RETRACT_LOAD
 
             
-    def _retract_shoot(self):
+    def retract_shoot(self):
         '''
             puts the robot into shoot mode
         '''
@@ -169,6 +167,8 @@ class IgusSlide(object):
             if self.timer.HasPeriodPassed(HAS_SHOT_TIME):
                 self.timer.Stop()
                 return True
+            else:
+                return False
             '''
                 #shuttle still too close   
                 else:
@@ -176,31 +176,51 @@ class IgusSlide(object):
                     self._has_shot_timer.Reset()
                     return False
             '''
-        else:
+        elif self.state == SHOT:
             return True
+        else:
+            return False
        
+#sr todo: i dont think this is needed since we now use a distance sensor       
+
     def ball_sensor_triggered(self):
         '''
             determines if the ball is ready to be lifted from loading mode into
             shooting mode
         '''
-        #only has meaning in loading mode
-        if self.state == RETRACTED_LOAD:
-            #sensor is off meaning that there is something over the sensor
-            if not self.ball_detector.Get():
-                if self.has_ball_count == HAS_BALL:
-                    return True
+        
+        return self.ball_detector.GetDistance() < 5
+        '''
+            #only has meaning in loading mode
+            if self.state == RETRACTED_LOAD:
+                #ball is less than 5 inches away, so we have a ball
+                if self.ball_detector.GetDistance() < 5:
+                    if self.has_ball_count == HAS_BALL:
+                        return True
+                    else:
+                        #increment are ball checker
+                        self.has_ball_count += 1
+                        return False
                 else:
-                    #increment are ball checker
-                    self.has_ball_count += 1
+                    self.has_ball_count = 0
                     return False
             else:
-                self.has_ball_count = 0
+                #always return false
                 return False
-        else:
-            #always return false
-            return False
-    
+        '''
+
+
+        
+    def _update_smartdashboard(self):
+        '''
+            update smart dashboard with internal variables
+        '''
+        
+        self.sd.PutString("igus_slide state", state_dict[self.state])
+        self.sd.PutNumber("ball_detector", self.ball_detector.GetDistance())
+        self.sd.PutNumber("shuttle_detector", self.shuttle_detector.GetDistance())
+        
+         
     def update(self):
         '''
             Updates the igus_slide and any other components that are part of it
@@ -231,7 +251,8 @@ class IgusSlide(object):
             #that could be done by having a thread poll the sensor, but that seems like a lot of
             #over head....
             
-            if not self.igus_motor.GetForwardLimitOK() or self.shuttle_detector.Get() == False:
+            #todo fix this
+            if not self.igus_motor.GetForwardLimitOK():# or self.shuttle_detector.GetDistance() < 5:
                 #since we can't get to loading position if we missed it then
                 #we will just have to deal with it and say we are in
                 #loading position either way
@@ -246,10 +267,10 @@ class IgusSlide(object):
             
         elif self.state == SHOOT:
             #pulls us out of gear
-            self.igus_solenoid.Set(wpilib.DoubleSolenoid.Value.kForward)
+            self.igus_solenoid.Set(RELEASE)
             #start the shoot timer
-            self._has_shot_timer.Reset()
-            self._has_shot_timer.Start()
+            self.timer.Reset()
+            self.timer.Start()
             self.state = SHOOTING
 
         elif self.state == SHOOTING:
@@ -258,7 +279,7 @@ class IgusSlide(object):
             if self._has_shot():
                 #push us back into gear (note until the motor starts retracting 
                 #we may not actually be back in gear
-                self.igus_solenoid.Set(wpilib.DoubleSolenoid.Value.kReverse)
+                self.igus_solenoid.Set(ENGAGE)
                 self.state = SHOT
                 #reset the timer, but it should keep going
                 self.timer.Reset()
@@ -269,16 +290,18 @@ class IgusSlide(object):
             #set us to our next state (states check if they can retract)
             if self.next_state == RETRACT_SHOOT:
                 #go to shoot position because we were asked too
-                self._retract_shoot()
+                self.retract_shoot()
             else:
                 #go to load position by default
-                self._retract_load()
+                self.retract_load()
                 
             
         #if we are in manual mode out motor value was set before this
         #sets the components of the igus    
         self.igus_motor.Set(self.igus_motor_value)
         
+        #update smart dashboard
+        self._update_smartdashboard()
         #reset the motor value of the igus motor
         
         self.igus_motor_value = 0

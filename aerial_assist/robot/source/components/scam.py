@@ -11,14 +11,14 @@ except ImportError:
 from common.modes import *
 
 #Variables 
-LOADING_ANGLE = -15
+LOADING_ANGLE = -31
 SHOOTING_ANGLE = 45
 PASSING_ANGLE = LOADING_ANGLE
 
 class Scam(object):
     
     
-    def __init__(self, l_actuator, auto_mode = AUTO):
+    def __init__(self, l_actuator):
         
         '''
            Controls the 4 bar linkage with the linear actuator
@@ -31,47 +31,43 @@ class Scam(object):
            l_actuator_val     value to set the l_actuator position, maybe speed or position
         '''
         self.l_actuator = l_actuator    
-        self.l_actuator_val = None
+        self.l_actuator_val= 0
         self.has_passed_timer = wpilib.Timer()
-        self.auto_mode = auto_mode
         
-    def set_mode(self, mode):
-        '''
-            sets the mode of the scam
-        '''
-        if self.auto_mode == AUTO:
-            if mode == SHOOT_MODE:
-                self.set_scam_angle(SHOOTING_ANGLE)
-                
-            elif mode == LOAD_MODE:
-                self.set_scam_angle(LOADING_ANGLE)
-                
-            elif mode == PASS_MODE:
-                self.set_scam_angle(PASSING_ANGLE)
-            
+        self.sd = wpilib.SmartDashboard
+                    
     
-    def set_scam_angle(self, d_angle):
+    def set_angle(self, d_angle):
         ''' 
             Sets the platform to the desire length
         '''
         self.l_actuator_val = d_angle
         self.l_actuator.set_angle(d_angle)
 
-    def set_scam_speed(self, d_speed):
-        #d_speed is the desired speed of the linear actuator.
-        #Will be used for maunal control
+    def set_speed(self, d_speed):
         
         self.l_actuator_val = d_speed
         self.l_actuator.set_manual_motor_value(d_speed)
             
-    def scam_in_postion(self, d_angle):
+    def in_position(self):
         '''
-            Compares current scam position to the expected position
+            Lets us know if the scam is ready
         '''
         return self.l_actuator.is_ready()
     
+    def _update_smartdashboard(self):
+        self.sd.PutNumber("Scam Goal", self.l_actuator_val)
+        self.sd.PutNumber("Scam Position", self.l_actuator.get_position())
+        
+
     def update(self):
         
         self.l_actuator.update()
+        self._update_smartdashboard()
+        
+        #
+        # Clear l_actuators goal/val
+        #
+        self.l_actuator_val = 0
         
         
