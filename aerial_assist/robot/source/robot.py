@@ -112,7 +112,7 @@ class MyRobot(wpilib.SimpleRobot):
         self.l_actuator.SetPositionReference(wpilib.CANJaguar.kPosRef_Potentiometer)
         #guess on number of turns, but it should be treated as one turn anyway
         self.l_actuator.ConfigPotentiometerTurns(1)
-        self.l_actuator.ConfigNeutralMode(wpilib.CANJaguar.kNeutralMode_Coast)
+        self.l_actuator.ConfigNeutralMode(wpilib.CANJaguar.kNeutralMode_Brake)
         self.l_actuator.SetPID(SCAM_P, SCAM_I, SCAM_D)
         
         self.l_actuator_auto = AnglePositionJaguar(self.l_actuator, THRESHOLD, ANGLE_MIN_POSITION, ANGLE_MAX_POSITION, ANGLE_MIN_ANGLE, ANGLE_MAX_ANGLE)
@@ -183,8 +183,8 @@ class MyRobot(wpilib.SimpleRobot):
         
         next_mode = None
         
-        auto_scam = True
-        auto_load = True
+        auto_scam = False
+        auto_load = False
         man_scam_speed = 0
         while self.IsOperatorControl () and self.IsEnabled():
             dog.Feed()
@@ -247,9 +247,10 @@ class MyRobot(wpilib.SimpleRobot):
             #
             # set direction of scam
             #
-            if auto_scam:
+            if not auto_scam:
                 if self.logitech.GetRawButton(lt.L_TRIGGER):
                     man_scam_speed = 1
+
                 elif self.logitech.GetRawButton(lt.L_BUMPER):
                     man_scam_speed = -1
                 else:
@@ -275,16 +276,17 @@ class MyRobot(wpilib.SimpleRobot):
                     self.scam.set_angle(LOADING_ANGLE)
                     # we are in position, stop using PID, were better without it
                     #if self.scam.in_position():
-                     #   self.scam.set_speed(0)
+                    #   self.scam.set_speed(0)
                         
                     #put igus into loading mode    
                     self.igus_slide.retract_load()
                 else:
+                    print("man scam speed", man_scam_speed)
                     self.scam.set_speed(man_scam_speed)
                 
                 #if auto load is active set our next mode
                 if auto_load:
-                    if (self.igus_slide.ball_sensor_triggered):
+                    if (self.igus_slide.ball_sensor_triggered()):
                         next_mode = SHOOT_MODE
                         
                         
@@ -366,6 +368,8 @@ class MyRobot(wpilib.SimpleRobot):
             
             #update smartdashboard
             self.sd.PutString("Robot System", mode_dict[self.mode])
+            self.sd.PutBoolean("scam auto",auto_scam)
+            self.sd.PutBoolean("auto load", auto_load)
             #update components, has to be the last thing called except wait
             self.update()
             

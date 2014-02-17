@@ -89,8 +89,6 @@ class IgusSlide(object):
             shoots the ball but only if the limit switch is hit. Unless we have
             overridden the limitswitch?
         '''
-        self.sd.PutBoolean("igus forwards limit", self.igus_motor.GetForwardLimitOK())
-        self.sd.PutBoolean("igus rear limit", self.igus_morot.GetReadLimitOK())
         if not self.igus_motor.GetForwardLimitOK() or override:
             self.state = SHOOT
         
@@ -219,6 +217,8 @@ class IgusSlide(object):
         self.sd.PutString("igus_slide state", state_dict[self.state])
         self.sd.PutNumber("ball_detector", self.ball_detector.GetDistance())
         self.sd.PutNumber("shuttle_detector", self.shuttle_detector.GetDistance())
+        self.sd.PutBoolean("igus forwards limit", self.igus_motor.GetForwardLimitOK())
+        self.sd.PutBoolean("igus rear limit", self.igus_motor.GetReverseLimitOK())
         
          
     def update(self):
