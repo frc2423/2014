@@ -14,11 +14,8 @@ import common.logitech_controller as lt
 #component imports
 from components.ball_roller import BallRoller
 import components.ball_roller as bl
-from components.igus_slide import IgusSlide
-from components.scam import Scam
-
-#system imports
-from systems.robot_system import RobotSystem
+from components.igus_slide import IgusSlide,RELEASE, ENGAGE
+from components.scam import Scam, LOADING_ANGLE, SHOOTING_ANGLE, PASSING_ANGLE
 
 #Constants
 CONTROL_LOOP_WAIT_TIME = .025
@@ -139,18 +136,12 @@ class MyRobot(wpilib.SimpleRobot):
         self.igus_slide  = IgusSlide(self.igus_motor, self.motor_release_solenoid, self.shuttle_distance_sensor, self.ball_detector, self.shuttle_detector)  
         self.scam = Scam(self.l_actuator_auto)
         
-        #create systems
-        self.robot_system = RobotSystem( self.scam, self.igus_slide, self.ball_roller)
-        
-                # autonomous mode needs a dict of components
+        # autonomous mode needs a dict of components
         components = {
             # components 
             'ball_roller': self.ball_roller,
-            'igus_slide': self.self.igus_slide,
+            'igus_slide': self.igus_slide,
             'scam': self.scam, 
-            
-            # systems
-            'robot_system': self.robot_system,
         }
         
         self.components = []
@@ -160,16 +151,16 @@ class MyRobot(wpilib.SimpleRobot):
         #determines if we are to automatically switch states from loading to shooting
         #
         
-        self.auto_load = True
-        
         #self.operator_control_mode = OperatorControlManager(components, self.ds)
+        self.mode = None
+        
     def RobotInit(self):
         pass
         
     def Disabled(self):
         print("MyRobot::Disabled()")
         
-        self.sd.PutNumber("Robot Mode", self.MODE_DISABLED)
+        #self.sd.PutString("Robot Mode", mode_dict[self.mode])
     
         while self.IsDisabled():
             wpilib.Wait(CONTROL_LOOP_WAIT_TIME)
@@ -191,7 +182,10 @@ class MyRobot(wpilib.SimpleRobot):
         dog.SetEnabled(True)
         
         next_mode = None
-            
+        
+        auto_scam = True
+        auto_load = True
+        man_scam_speed = 0
         while self.IsOperatorControl () and self.IsEnabled():
             dog.Feed()
             #
@@ -229,22 +223,44 @@ class MyRobot(wpilib.SimpleRobot):
                 self.mode =SHOOT_MODE
                 next_mode = None
             
-            elif self.next_mode != None:
+            elif next_mode != None:
                 #
                 #after setting the next mode, clear it so we dont get confused
                 #
                 self.mode = next_mode
-                self.next_mode = None
+                next_mode = None
                 
-
+            #
+            #auto mode configuration
+            #
+            
+            #switch between if we can auto load or not
+            if self.logitech.GetRawButton(4):
+                auto_load = not auto_load
+            
+            #
+            #switch between if the scam is auto
+            #
+            if self.logitech.GetRawButton(lt.SELECT):
+                auto_scam =  not auto_scam
+            
+            #
+            # set direction of scam
+            #
+            if auto_scam:
+                if self.logitech.GetRawButton(lt.L_TRIGGER):
+                    man_scam_speed = 1
+                elif self.logitech.GetRawButton(lt.L_BUMPER):
+                    man_scam_speed = -1
+                else:
+                    man_scam_speed = 0
+            
+            
             #
             #LOAD_MODE actions
             #
             
             if self.mode == LOAD_MODE:
-                #switch between if we can auto load or not
-                if self.logitech.GetRawButton(4):
-                    self.auto_load = not self.auto_load
                 
                 #
                 #Auto feed the ball
@@ -255,18 +271,19 @@ class MyRobot(wpilib.SimpleRobot):
                 # Set the position of the scam first do angle control, set to 0
                 # if we are already in the goal range
                 #
-                
-                self.scam.set_angle(self.scam.LOADING_ANGLE)
-                
-                # we are in position, stop using PID, were better without it
-                if self.scam.in_position():
-                    self.scam.set_speed(0)
-                    
-                #put igus into loading mode    
-                self.igus_slide.retract_load()
+                if auto_scam:
+                    self.scam.set_angle(LOADING_ANGLE)
+                    # we are in position, stop using PID, were better without it
+                    #if self.scam.in_position():
+                     #   self.scam.set_speed(0)
+                        
+                    #put igus into loading mode    
+                    self.igus_slide.retract_load()
+                else:
+                    self.scam.set_speed(man_scam_speed)
                 
                 #if auto load is active set our next mode
-                if(self.auto_load):
+                if auto_load:
                     if (self.igus_slide.ball_sensor_triggered):
                         next_mode = SHOOT_MODE
                         
@@ -287,14 +304,20 @@ class MyRobot(wpilib.SimpleRobot):
                 # if we are already in the goal range
                 #
                 
-                self.scam.set_angle(self.scam.SHOOTING_ANGLE)
-                
-                # we are in position, stop using PID, were better without it
-                if self.scam.in_position():
-                    self.scam.set_speed(0)
-                    #we are in position ball rollers don't need to be rolled in
-                    #any more
+                if auto_scam: 
+                    self.scam.set_angle(SHOOTING_ANGLE)
+                    # we are in position, stop using PID, were better without it
+                    if self.scam.in_position():
+                        self.scam.set_speed(0)
+                        #we are in position ball rollers don't need to be rolled in
+                        #any more
+                        self.ball_roller.off()
+                        
+                else:
+                    self.scam.set_speed(man_scam_speed)
                     self.ball_roller.off()
+                    if self.logitech.GetRawButton(lt.R_BUMPER):
+                        self.ball_roller.roll_in()
                     
                 #
                 #Retract to shooting position, if we are not already there
@@ -317,12 +340,12 @@ class MyRobot(wpilib.SimpleRobot):
             if self.mode  == PASS_MODE:
                 #switch between if we can auto load or not
                 if self.logitech.GetRawButton(4):
-                    self.auto_load = not self.auto_load
+                    auto_load = not auto_load
                 
                 #
                 #Pass the ball by user command
                 #
-                if self.logitech.GetRawButton(lt.R_BUMMPER):
+                if self.logitech.GetRawButton(lt.R_BUMPER):
                     self.ball_roller.roll_out()
                 
 
@@ -330,8 +353,11 @@ class MyRobot(wpilib.SimpleRobot):
                 # Set the position of the scam first do angle control, set to 0
                 # if we are already in the goal range
                 #
+                if (auto_scam):
+                    self.scam.set_angle(PASSING_ANGLE)
+                else:
+                    self.scam.set_speed
                 
-                self.scam.set_angle(self.scam.LOADING_ANGLE)
                 
                 # we are in position, stop using PID, were better without it
                 if self.scam.in_position():
@@ -339,7 +365,7 @@ class MyRobot(wpilib.SimpleRobot):
                     
             
             #update smartdashboard
-                self.sd.PutString("Robot Mode", mode_dict[self.mode])
+            self.sd.PutString("Robot System", mode_dict[self.mode])
             #update components, has to be the last thing called except wait
             self.update()
             
