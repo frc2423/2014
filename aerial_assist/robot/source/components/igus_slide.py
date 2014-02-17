@@ -185,7 +185,7 @@ class IgusSlide(object):
             shooting mode
         '''
         #only has meaning in loading mode
-        if self.mode == RETRACTED_LOAD:
+        if self.state == RETRACTED_LOAD:
             #sensor is off meaning that there is something over the sensor
             if not self.ball_detector.Get():
                 if self.has_ball_count == HAS_BALL:

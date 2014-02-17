@@ -136,12 +136,20 @@ class MyRobot(wpilib.SimpleRobot):
         self.ball_roller = BallRoller(ball_roller_relay)
         self.igus_slide  = IgusSlide(self.igus_motor, self.motor_release_solenoid, self.shuttle_distance_sensor, ball_detector, shuttle_detector)  
         self.scam = Scam(self.l_actuator_auto)
-        
+        self.components = [self.ball_roller, self.igus_slide, self.scam]
         
         #create systems
         self.robot_system = RobotSystem( self.scam, self.igus_slide, self.ball_roller)
         
-
+        #storing modes for testing
+        self.LOAD_MODE = LOAD_MODE
+        self.PASS_MODE = PASS_MODE
+        self.SHOOT_MODE = SHOOT_MODE
+        
+        #storing components for testing
+        self.BallRoller = BallRoller
+        self.Scam = Scam
+        self.IgusSlide = IgusSlide
     def RobotInit(self):
         pass
         
@@ -177,14 +185,17 @@ class MyRobot(wpilib.SimpleRobot):
             #
             
             #these are exclusionary
+            button_two = self.logitech.GetRawButton(2)
+            l_trigger = self.logitech.GetRawButton(lt.L_TRIGGER)
+            r_bumber = self.logitech.GetRawButton(lt.R_BUMPER)
             
-            if self.logitech.GetRawButton(2): #todo: find actual button
+            if button_two: #todo: find actual button
                 self.robot_system.set_mode(LOAD_MODE)
                 
-            elif self.logitech.GetRawButton(lt.L_TRIGGER): #todo: find actual button
+            elif l_trigger: #todo: find actual button
                 self.robot_system.set_mode(PASS_MODE)
                 
-            elif self.logitech.GetRawButton(lt.R_BUMPER): #todo: find actual button
+            elif r_bumber: #todo: find actual button
                 self.robot_system.set_mode(SHOOT_MODE)
 
             #
@@ -205,7 +216,7 @@ class MyRobot(wpilib.SimpleRobot):
                 if self.robot_system.get_mode() == PASS_MODE:
                     
                     #in this case this should pass the ball out of the robot
-                    self.robot_system.ball_roll(ball_roller.OUT)
+                    self.robot_system.ball_roll(OUT)
                         
                     
                 elif self.robot_system.get_mode() == SHOOT_MODE:
@@ -214,7 +225,23 @@ class MyRobot(wpilib.SimpleRobot):
                     
             #sr todo: figure out the rest of the controls
             
+            
+            
+            #do all the robot actions
+            self.robot_system.do_auto_actions()
+            
+            
+            #update components, has to be the last thing called except wait
+            self.update()
+            
+            
             self.delay.wait()
+                        
+            
+    def update(self):
+        for component in self.components:
+            component.update()
+            
 def run():
     
     # this is initialized in StartCompetition, but one of our

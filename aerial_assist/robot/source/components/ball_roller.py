@@ -47,7 +47,7 @@ class BallRoller(object):
         self.mode = MANUAL
 
     def update(self):
-        print(self.direction)
+        #print(self.direction)
         self.ball_roller_motor.Set(self.direction)
         
         #reset the speed if we are not in auto mode

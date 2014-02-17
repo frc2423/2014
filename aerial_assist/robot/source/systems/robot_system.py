@@ -85,7 +85,7 @@ class RobotSystem(object):
         '''
         
         #must be in loading mode and every component in auto mode 
-        if self.mode == LOADING_MODE and sum([component.auto_mode == AUTO for \
+        if self.mode == LOAD_MODE and sum([component.auto_mode == AUTO for \
                                                  component in self.components]):
             
             if self.igus_slide.ball_sensor_triggered():
