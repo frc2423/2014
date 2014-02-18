@@ -89,7 +89,7 @@ class IgusSlide(object):
             shoots the ball but only if the limit switch is hit. Unless we have
             overridden the limitswitch?
         '''
-        if not self.igus_motor.GetForwardLimitOK() or override:
+        if not self.igus_motor.GetReverseLimitOK() or override:
             self.state = SHOOT
         
     def retract_load(self):
@@ -227,9 +227,9 @@ class IgusSlide(object):
         '''
         
         if self.state == RETRACT_SHOOT:
-            #GetForwardLimitOK gets the state of the limit switch from the CANJaguar.
+            #GetReverseLimitOK gets the state of the limit switch from the CANJaguar.
             #pulls back the slide until it hits the limit
-            if self.igus_motor.GetForwardLimitOK():
+            if self.igus_motor.GetReverseLimitOK():
     
                 self.igus_motor_value = RETRACT_SPEED
 
@@ -252,7 +252,7 @@ class IgusSlide(object):
             #over head....
             
             #todo fix this
-            if not self.igus_motor.GetForwardLimitOK():# or self.shuttle_detector.GetDistance() < 5:
+            if not self.igus_motor.GetReverseLimitOK():# or self.shuttle_detector.GetDistance() < 5:
                 #since we can't get to loading position if we missed it then
                 #we will just have to deal with it and say we are in
                 #loading position either way
@@ -283,7 +283,7 @@ class IgusSlide(object):
                 self.state = SHOT
                 #reset the timer, but it should keep going
                 self.timer.Reset()
-            
+                self.timer.Start()
         #we dont want the shuttle to flap around and not be connected to the winch
         #so lets auto retract it here
         elif self.state == SHOT:

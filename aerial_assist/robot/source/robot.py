@@ -62,7 +62,7 @@ SCAM_I = .1
 SCAM_D = 14
 
 #guess based on specs todo fix this based on emperical data
-THRESHOLD = .02 #position in degrees
+THRESHOLD = .05 #position in degrees
 ANGLE_MAX_POSITION = .757
 ANGLE_MIN_POSITION = .042
 ANGLE_MIN_ANGLE = 65
@@ -181,11 +181,13 @@ class MyRobot(wpilib.SimpleRobot):
         dog.SetExpiration(0.25)
         dog.SetEnabled(True)
         
-        next_mode = None
-        
-        auto_scam = False
-        auto_load = False
+        next_mode = LOAD_MODE
+
+        auto_scam = True
+        auto_load = True
         man_scam_speed = 0
+        #star compressor
+        self.compressor.Start()
         while self.IsOperatorControl () and self.IsEnabled():
             dog.Feed()
             #
@@ -235,14 +237,19 @@ class MyRobot(wpilib.SimpleRobot):
             #
             
             #switch between if we can auto load or not
-            if self.logitech.GetRawButton(4):
-                auto_load = not auto_load
+            if self.logitech.GetRawAxis(lt.D_PAD_AXIS_X) > 0:
+                auto_load = True
+            if self.logitech.GetRawAxis(lt.D_PAD_AXIS_X) < 0:
+                auto_load = False
             
             #
             #switch between if the scam is auto
             #
             if self.logitech.GetRawButton(lt.SELECT):
-                auto_scam =  not auto_scam
+                auto_scam =  False
+            
+            if self.logitech.GetRawButton(lt.START):
+                auto_scam = True
             
             #
             # set direction of scam
@@ -250,7 +257,6 @@ class MyRobot(wpilib.SimpleRobot):
             if not auto_scam:
                 if self.logitech.GetRawButton(lt.L_TRIGGER):
                     man_scam_speed = 1
-
                 elif self.logitech.GetRawButton(lt.L_BUMPER):
                     man_scam_speed = -1
                 else:

@@ -1,10 +1,10 @@
 
 try:
-    from wpilib import CANJaguar
+    import wpilib
+    from wpilib import  CANJaguar
 except ImportError:
+    from pyfrc import wpilib
     from pyfrc.wpilib import CANJaguar
-
-
 class _AutoJaguar(object):
     '''
         Implements a wrapper around a CANJaguar for automated control, and
@@ -126,7 +126,7 @@ class AnglePositionJaguar(_AutoJaguar):
     def get_position(self):
         '''Returns current position as calculated by the position reference'''
         p = self.motor.GetPosition()
-        
+        wpilib.SmartDashboard.PutNumber("Scam Position val", p)
         # x is angle
         # y is position
         
@@ -135,6 +135,7 @@ class AnglePositionJaguar(_AutoJaguar):
     
     def set_angle(self, angle):
         '''Tell the motor to go to a specific angle'''
+        print("got to angle:", angle)
         self.mode = self.AUTO
         
         # x is position
