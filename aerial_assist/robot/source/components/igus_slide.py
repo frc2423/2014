@@ -137,6 +137,9 @@ class IgusSlide(object):
         else:
             return True
         
+    def set_manual(self):
+        self.state = MANUAL_CONTROL
+        
     def retract(self):
         '''
             This is a manual retract, it will retract with out care about anything

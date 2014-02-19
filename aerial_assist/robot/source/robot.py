@@ -68,6 +68,8 @@ ANGLE_MIN_POSITION = .042
 ANGLE_MIN_ANGLE = 65
 ANGLE_MAX_ANGLE = -30
 
+#Auto constant
+AUTO_DRIVE_TIME = 1.5
 
 
 class MyRobot(wpilib.SimpleRobot):
@@ -131,6 +133,10 @@ class MyRobot(wpilib.SimpleRobot):
         
         self.robot_drive = wpilib.RobotDrive(self.front_left_jag, self.back_left_jag, self.front_right_jag, self.back_right_jag)
         
+        #Auto timer
+        self.auto_timer = wpilib.Timer()
+        
+        self.auto_igus = True
         #create components
         self.ball_roller = BallRoller(ball_roller_relay)
         self.igus_slide  = IgusSlide(self.igus_motor, self.motor_release_solenoid, self.shuttle_distance_sensor, self.ball_detector, self.shuttle_detector)  
@@ -170,7 +176,19 @@ class MyRobot(wpilib.SimpleRobot):
         
         while self.IsOperatorControl() and self.IsEnabled():
             wpilib.Wait(CONTROL_LOOP_WAIT_TIME)
-    
+            if self.auto_timer.Get() == 0:
+                self.scam.set_angle(45)
+                self.auto_timer.Start()
+                self.igus_slide.retract_shoot()
+                
+            elif not self.auto_timer.HasPeriodPassed(AUTO_DRIVE_TIME):
+                self.robot_drive.MecanumDrive_Cartesian(0, 1, 0)
+                self.ball_roller.roll_in()
+                
+            elif self.auto_timer.HasPeriodPassed(AUTO_DRIVE_TIME):
+                self.robot_drive.MecanumDrive_Cartesian(0, 0, 0,)
+                if self.scam.in_position():
+                    self.igus_slide.shoot()
     def OperatorControl(self):
         print("MyRobot::OperatorControl()")
 
@@ -207,6 +225,8 @@ class MyRobot(wpilib.SimpleRobot):
             #
             #robot_system modes
             #
+            
+            
             
             #
             #these are exclusionary, change the mode based on user input
@@ -252,6 +272,17 @@ class MyRobot(wpilib.SimpleRobot):
                 auto_scam = True
             
             #
+            #Manual igus_slide
+            #
+            
+            if self.logitech.GetRawAxis(lt.D_PAD_AXIS_Y) <= -.5:
+                self.auto_igus = False
+                
+            if self.logitech.GetAxis(lt.D_PAD_AXIS_Y) >= .5:
+                self.auto_igus = True
+                
+            
+            #
             # set direction of scam
             #
             if not auto_scam:
@@ -284,7 +315,9 @@ class MyRobot(wpilib.SimpleRobot):
                     #if self.scam.in_position():
                     #   self.scam.set_speed(0)
                         
-                    #put igus into loading mode    
+                    #put igus into loading mode
+                    
+                if self.auto_igus:    
                     self.igus_slide.retract_load()
                 else:
                     print("man scam speed", man_scam_speed)
@@ -330,7 +363,8 @@ class MyRobot(wpilib.SimpleRobot):
                 #
                 #Retract to shooting position, if we are not already there
                 #
-                self.igus_slide.retract_shoot()
+                if self.auto_igus:
+                    self.igus_slide.retract_shoot()
                 
                 
                 #
@@ -347,8 +381,6 @@ class MyRobot(wpilib.SimpleRobot):
             #
             if self.mode  == PASS_MODE:
                 #switch between if we can auto load or not
-                if self.logitech.GetRawButton(4):
-                    auto_load = not auto_load
                 
                 #
                 #Pass the ball by user command
@@ -363,15 +395,18 @@ class MyRobot(wpilib.SimpleRobot):
                 #
                 if (auto_scam):
                     self.scam.set_angle(PASSING_ANGLE)
+                    
                 else:
-                    self.scam.set_speed
-                
+                    self.scam.set_speed(man_scam_speed)
+                    print("man scam speed", man_scam_speed)
                 
                 # we are in position, stop using PID, were better without it
                 if self.scam.in_position():
                     self.scam.set_speed(0)
                     
-            
+            if not self.auto_igus and self.logitech.GetRawButton(4):
+                self.igus_slide.retract()
+                
             #update smartdashboard
             self.sd.PutString("Robot System", mode_dict[self.mode])
             self.sd.PutBoolean("scam auto",auto_scam)
