@@ -8,8 +8,10 @@ from common.delay import PreciseDelay
 from common.generic_distance_sensor import GenericDistanceSensor, MB10X3, GP2D120
 from common.ez_can_jaguar import EzCANJaguar 
 from common.auto_jaguar import AnglePositionJaguar
+from common.ws2801 import ws2801_led
 from common.modes import *
 import common.logitech_controller as lt
+
 
 #component imports
 from components.ball_roller import BallRoller
@@ -38,7 +40,7 @@ shuttle_mb10x3_port = 1
 left_mb10x3_port = 2
 right_mb10x3_port = 3
 ball_optical = 4
-shuttle_optical =5
+shuttle_optical = 5
 
 #CAN channels 
 igus_can = 1
@@ -53,6 +55,13 @@ compressorRelayChannel = 6
 camera_led_relay_port = 7
 ball_roller_relay_port = 5
 
+#SPI
+spi_timer_port = 5
+spi_controller_port = 4
+
+#LED
+led_strip_length = 36
+
 #Joystick channel
 joystick_channel = 1
 
@@ -62,7 +71,7 @@ SCAM_I = .1
 SCAM_D = 14
 
 #guess based on specs todo fix this based on emperical data
-THRESHOLD = .05 #position in degrees
+THRESHOLD = .02 #position in degrees
 ANGLE_MAX_POSITION = .757
 ANGLE_MIN_POSITION = .042
 ANGLE_MIN_ANGLE = 65
@@ -83,6 +92,16 @@ class MyRobot(wpilib.SimpleRobot):
         wpilib.SimpleRobot.__init__(self)
         
         #initilize all basic types( sensors, motors, stuuf like that)
+        
+        #LED SPI DigitalOutputs
+        self.spi_timer = wpilib.DigitalOutput(spi_timer_port)
+        self.spi_controller = wpilib.DigitalOutput(spi_controller_port)
+        
+        #LED SPI
+        self.led_spi = wpilib.SPI(self.spi_timer, self.spi_controller)
+        
+        #LED
+        self.led_strip  = ws2801_led(led_strip_length, self.led_spi)
         
         #Drive jags
         self.front_left_jag =  wpilib.Jaguar(front_left_channel)
@@ -137,6 +156,7 @@ class MyRobot(wpilib.SimpleRobot):
         self.auto_timer = wpilib.Timer()
         
         self.auto_igus = True
+        
         #create components
         self.ball_roller = BallRoller(ball_roller_relay)
         self.igus_slide  = IgusSlide(self.igus_motor, self.motor_release_solenoid, self.shuttle_distance_sensor, self.ball_detector, self.shuttle_detector)  
@@ -214,7 +234,9 @@ class MyRobot(wpilib.SimpleRobot):
             y_axis = self.logitech.GetRawAxis(lt.L_AXIS_Y)
             twist =  self.logitech.GetRawAxis(lt.R_AXIS_X)
             x_axis = self.logitech.GetRawAxis(lt.L_AXIS_X)
- 
+            
+            self.led_strip.set_led_color(1, 1, 0, 0, self.led_strip.get_num_leds())
+            
             axes = [y_axis, twist, x_axis]
             for axis in axes: 
                 if axis < .1:
@@ -275,10 +297,10 @@ class MyRobot(wpilib.SimpleRobot):
             #Manual igus_slide
             #
             
-            if self.logitech.GetRawAxis(lt.D_PAD_AXIS_Y) <= -.5:
+            if self.logitech.GetRawAxis(lt.D_PAD_AXIS_Y) <= 0:
                 self.auto_igus = False
                 
-            if self.logitech.GetAxis(lt.D_PAD_AXIS_Y) >= .5:
+            if self.logitech.GetRawAxis(lt.D_PAD_AXIS_Y) >= 0:
                 self.auto_igus = True
                 
             
@@ -303,8 +325,7 @@ class MyRobot(wpilib.SimpleRobot):
                 #
                 #Auto feed the ball
                 #
-                if not self.scam.l_actuator.GetForwardLimitOk():
-                    self.ball_roller.roll_in()
+                self.ball_roller.roll_in()
                 
                 #
                 # Set the position of the scam first do angle control, set to 0

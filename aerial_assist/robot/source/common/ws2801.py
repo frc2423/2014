@@ -88,7 +88,7 @@ class ws2801_led(object):
         
     def get_num_leds(self):
         return self.num_leds
-    
+ 
     def set_led_color(self, pixel, r, g, b, repeat = 0):
         '''
             sets color of a specific led, should not set or change while
