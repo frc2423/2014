@@ -45,6 +45,8 @@ SOLENOID_SET_TIME = .5
 #better names for pneumatic positions
 RELEASE = wpilib.DoubleSolenoid.kForward
 ENGAGE = wpilib.DoubleSolenoid.kReverse
+
+ball_sensor_timer = wpilib.Timer()
 class IgusSlide(object):
     '''
         controls the igus_slide winch
@@ -190,7 +192,14 @@ class IgusSlide(object):
             shooting mode
         '''
         
-        return self.ball_detector.GetDistance() < 5
+        if self.ball_detector.GetDistance() < 5:
+            ball_sensor_timer.Start()
+            if ball_sensor_timer.HasPeriodPassed(.05) and self.ball_detector.GetDistance() <5:
+                ball_sensor_timer.Reset()
+                if ball_sensor_timer.HasPeriodPassed(.05):
+                    ball_sensor_timer.Stop()
+                    ball_sensor_timer.Reset()
+                    return self.ball_detector.GetDistance() < 5
         '''
             #only has meaning in loading mode
             if self.state == RETRACTED_LOAD:

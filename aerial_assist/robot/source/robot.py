@@ -303,7 +303,8 @@ class MyRobot(wpilib.SimpleRobot):
                 #
                 #Auto feed the ball
                 #
-                self.ball_roller.roll_in()
+                if not self.scam.l_actuator.GetForwardLimitOk():
+                    self.ball_roller.roll_in()
                 
                 #
                 # Set the position of the scam first do angle control, set to 0
