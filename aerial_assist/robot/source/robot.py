@@ -12,12 +12,14 @@ from common.ws2801 import ws2801_led
 from common.modes import *
 import common.logitech_controller as lt
 
-
 #component imports
 from components.ball_roller import BallRoller
 import components.ball_roller as bl
 from components.igus_slide import IgusSlide,RELEASE, ENGAGE
 from components.scam import Scam, LOADING_ANGLE, SHOOTING_ANGLE, PASSING_ANGLE
+
+#Operator control Manager
+#from operator_control import OperatorControlManager
 
 #Constants
 CONTROL_LOOP_WAIT_TIME = .025
@@ -73,9 +75,9 @@ ANGLE_MIN_POSITION = .042
 ANGLE_MIN_ANGLE = 65
 ANGLE_MAX_ANGLE = -30
 
-#Auto constant
+#Time for autonomous 
+AUTO_TIME = 10
 AUTO_DRIVE_TIME = 1.5
-
 
 class MyRobot(wpilib.SimpleRobot):
     
@@ -85,11 +87,6 @@ class MyRobot(wpilib.SimpleRobot):
     MODE_TELEOPERATED   = 3
     
     def __init__(self):
-        # keep in sync with driver station
-        MODE_DISABLED       = 1
-        MODE_AUTONOMOUS     = 2
-        MODE_TELEOPERATED   = 3
-        
         
         wpilib.SimpleRobot.__init__(self)
         
@@ -156,8 +153,6 @@ class MyRobot(wpilib.SimpleRobot):
         
         self.robot_drive = wpilib.RobotDrive(self.front_left_jag, self.back_left_jag, self.front_right_jag, self.back_right_jag)
         
-        #Auto timer
-        self.auto_timer = wpilib.Timer()
         
         
         #create components
@@ -175,6 +170,7 @@ class MyRobot(wpilib.SimpleRobot):
         
         self.components = []
         self.components = [v for v in components.values() if hasattr(v, 'update')]
+#        self.operator_control_mode = OperatorControlManager(components, self.ds)
         
         #
         #determines if we are to automatically switch states from loading to shooting
@@ -189,30 +185,35 @@ class MyRobot(wpilib.SimpleRobot):
     def Disabled(self):
         print("MyRobot::Disabled()")
         
-        self.sd.PutNumber("Robot Mode", MODE_DISABLED)
+        self.sd.PutNumber("Robot Mode", self.MODE_DISABLED)
     
         while self.IsDisabled():
             wpilib.Wait(CONTROL_LOOP_WAIT_TIME)
             
     def Autonomous(self):        
         print("MyRobot::Autonomous()")
-        
+        auto_timer = wpilib.Timer()
+        delay = PreciseDelay(CONTROL_LOOP_WAIT_TIME)
         self.sd.PutNumber("Robot Mode", self.MODE_AUTONOMOUS)
-        while self.IsOperatorControl() and self.IsEnabled():
-            wpilib.Wait(CONTROL_LOOP_WAIT_TIME)
-            if self.auto_timer.Get() == 0:
+        has_shot = False
+        while self.IsAutonomousControl() and self.IsEnabled():
+            if auto_timer.Get() == 0:
                 self.scam.set_angle(45)
                 self.auto_timer.Start()
                 self.igus_slide.retract_shoot()
                 
-            elif not self.auto_timer.HasPeriodPassed(AUTO_DRIVE_TIME):
+            elif not auto_timer.HasPeriodPassed(AUTO_DRIVE_TIME):
                 self.robot_drive.MecanumDrive_Cartesian(0, 1, 0)
                 self.ball_roller.roll_in()
                 
-            elif self.auto_timer.HasPeriodPassed(AUTO_DRIVE_TIME):
+            elif has_shot == False:
                 self.robot_drive.MecanumDrive_Cartesian(0, 0, 0,)
-                if self.scam.in_position():
+                if self.scam.in_position() and self.igus_slide.is_ready_shoot():
                     self.igus_slide.shoot()
+                    has_shot = True
+                    
+            delay.wait()
+
     def OperatorControl(self):
         print("MyRobot::OperatorControl()")
 
