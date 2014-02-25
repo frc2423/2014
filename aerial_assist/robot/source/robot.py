@@ -55,10 +55,6 @@ compressorRelayChannel = 6
 camera_led_relay_port = 7
 ball_roller_relay_port = 5
 
-#SPI
-spi_timer_port = 5
-spi_controller_port = 4
-
 #LED
 led_strip_length = 36
 
@@ -71,7 +67,7 @@ SCAM_I = .1
 SCAM_D = 14
 
 #guess based on specs todo fix this based on emperical data
-THRESHOLD = .02 #position in degrees
+THRESHOLD = .04 #position in degrees
 ANGLE_MAX_POSITION = .757
 ANGLE_MIN_POSITION = .042
 ANGLE_MIN_ANGLE = 65
@@ -89,19 +85,25 @@ class MyRobot(wpilib.SimpleRobot):
     MODE_TELEOPERATED   = 3
     
     def __init__(self):
+        # keep in sync with driver station
+        MODE_DISABLED       = 1
+        MODE_AUTONOMOUS     = 2
+        MODE_TELEOPERATED   = 3
+        
+        
         wpilib.SimpleRobot.__init__(self)
         
         #initilize all basic types( sensors, motors, stuuf like that)
         
         #LED SPI DigitalOutputs
-        self.spi_timer = wpilib.DigitalOutput(spi_timer_port)
-        self.spi_controller = wpilib.DigitalOutput(spi_controller_port)
+        self.spi_clock = wpilib.DigitalOutput(led_spi_clk)
+        self.spi_bus = wpilib.DigitalOutput(led_spi_bus)
         
         #LED SPI
-        self.led_spi = wpilib.SPI(self.spi_timer, self.spi_controller)
+        #self.led_spi = wpilib.SPI(self.spi_clock, self.spi_bus)
         
         #LED
-        self.led_strip  = ws2801_led(led_strip_length, self.led_spi)
+        #self.led_strip  = ws2801_led(led_strip_length, self.led_spi)
         
         #Drive jags
         self.front_left_jag =  wpilib.Jaguar(front_left_channel)
@@ -145,6 +147,8 @@ class MyRobot(wpilib.SimpleRobot):
         self.right_distance_sensor = GenericDistanceSensor(right_mb10x3_port, MB10X3)
         
         self.ball_detector = GenericDistanceSensor(ball_optical, GP2D120)
+        #geuss at average sampling 
+        self.ball_detector.SetAverageBits(8)
         self.shuttle_detector = GenericDistanceSensor(shuttle_optical, GP2D120)
         
         self.ds = wpilib.DriverStation.GetInstance()
@@ -155,7 +159,6 @@ class MyRobot(wpilib.SimpleRobot):
         #Auto timer
         self.auto_timer = wpilib.Timer()
         
-        self.auto_igus = True
         
         #create components
         self.ball_roller = BallRoller(ball_roller_relay)
@@ -186,7 +189,7 @@ class MyRobot(wpilib.SimpleRobot):
     def Disabled(self):
         print("MyRobot::Disabled()")
         
-        #self.sd.PutString("Robot Mode", mode_dict[self.mode])
+        self.sd.PutNumber("Robot Mode", MODE_DISABLED)
     
         while self.IsDisabled():
             wpilib.Wait(CONTROL_LOOP_WAIT_TIME)
@@ -194,6 +197,7 @@ class MyRobot(wpilib.SimpleRobot):
     def Autonomous(self):        
         print("MyRobot::Autonomous()")
         
+        self.sd.PutNumber("Robot Mode", self.MODE_AUTONOMOUS)
         while self.IsOperatorControl() and self.IsEnabled():
             wpilib.Wait(CONTROL_LOOP_WAIT_TIME)
             if self.auto_timer.Get() == 0:
@@ -212,6 +216,7 @@ class MyRobot(wpilib.SimpleRobot):
     def OperatorControl(self):
         print("MyRobot::OperatorControl()")
 
+        self.sd.PutNumber("Robot Mode", self.MODE_TELEOPERATED)
         self.delay = PreciseDelay(CONTROL_LOOP_WAIT_TIME)
 
         # set the watch dog
@@ -223,6 +228,7 @@ class MyRobot(wpilib.SimpleRobot):
 
         auto_scam = True
         auto_load = True
+        auto_igus = False
         man_scam_speed = 0
         #star compressor
         self.compressor.Start()
@@ -235,7 +241,7 @@ class MyRobot(wpilib.SimpleRobot):
             twist =  self.logitech.GetRawAxis(lt.R_AXIS_X)
             x_axis = self.logitech.GetRawAxis(lt.L_AXIS_X)
             
-            self.led_strip.set_led_color(1, 1, 0, 0, self.led_strip.get_num_leds())
+            #self.led_strip.set_led_color(1, 255, 0, 0, repeat = self.led_strip.get_num_leds())
             
             axes = [y_axis, twist, x_axis]
             for axis in axes: 
@@ -256,14 +262,17 @@ class MyRobot(wpilib.SimpleRobot):
             #if there is
             #
             if self.logitech.GetRawButton(1): #todo: find actual button
+                print("LOAD_MODE")
                 self.mode = LOAD_MODE
                 next_mode = None
                 
             elif self.logitech.GetRawButton(2): #todo: find actual button
+                print("PASS_MODE")
                 self.mode = PASS_MODE
                 next_mode = None
                 
             elif self.logitech.GetRawButton(3): #todo: find actual button
+                print("SHOOT_MODE")
                 self.mode =SHOOT_MODE
                 next_mode = None
             
@@ -297,12 +306,13 @@ class MyRobot(wpilib.SimpleRobot):
             #Manual igus_slide
             #
             
-            if self.logitech.GetRawAxis(lt.D_PAD_AXIS_Y) <= 0:
-                self.auto_igus = False
+            if self.logitech.GetRawAxis(lt.D_PAD_AXIS_Y) < 0:
+                auto_igus = False
                 
-            if self.logitech.GetRawAxis(lt.D_PAD_AXIS_Y) >= 0:
-                self.auto_igus = True
-                
+            elif self.logitech.GetRawAxis(lt.D_PAD_AXIS_Y) > 0:
+                auto_igus = True
+               
+                          
             
             #
             # set direction of scam
@@ -325,25 +335,26 @@ class MyRobot(wpilib.SimpleRobot):
                 #
                 #Auto feed the ball
                 #
-                self.ball_roller.roll_in()
+                if self.scam.lowered():
+                    self.ball_roller.roll_in()
                 
                 #
-                # Set the position of the scam first do angle control, set to 0
-                # if we are already in the goal range
+                # Set the position of the scam first do angle control, the limit switch
+                # shall tell us to stop
                 #
                 if auto_scam:
                     self.scam.set_angle(LOADING_ANGLE)
-                    # we are in position, stop using PID, were better without it
-                    #if self.scam.in_position():
-                    #   self.scam.set_speed(0)
-                        
+
+                else:
+                    self.scam.set_speed(man_scam_speed)
                     #put igus into loading mode
                     
-                if self.auto_igus:    
+                if auto_igus:    
                     self.igus_slide.retract_load()
                 else:
-                    print("man scam speed", man_scam_speed)
-                    self.scam.set_speed(man_scam_speed)
+                    self.igus_slide.set_manual()
+                    if self.logitech.GetRawButton(4):
+                        self.igus_slide.retract()
                 
                 #if auto load is active set our next mode
                 if auto_load:
@@ -385,8 +396,12 @@ class MyRobot(wpilib.SimpleRobot):
                 #
                 #Retract to shooting position, if we are not already there
                 #
-                if self.auto_igus:
+                if auto_igus:    
                     self.igus_slide.retract_shoot()
+                else:
+                    self.igus_slide.set_manual()
+                    if self.logitech.GetRawButton(4):
+                        self.igus_slide.retract()
                 
                 
                 #
@@ -415,24 +430,24 @@ class MyRobot(wpilib.SimpleRobot):
                 # Set the position of the scam first do angle control, set to 0
                 # if we are already in the goal range
                 #
-                if (auto_scam):
+                if auto_scam:
                     self.scam.set_angle(PASSING_ANGLE)
                     
                 else:
                     self.scam.set_speed(man_scam_speed)
-                    print("man scam speed", man_scam_speed)
-                
-                # we are in position, stop using PID, were better without it
-                if self.scam.in_position():
-                    self.scam.set_speed(0)
                     
-            if not self.auto_igus and self.logitech.GetRawButton(4):
-                self.igus_slide.retract()
+                if not auto_igus:    
+                    self.igus_slide.set_manual()
+                    if self.logitech.GetRawButton(4):
+                        self.igus_slide.retract()
+                    
+
                 
             #update smartdashboard
             self.sd.PutString("Robot System", mode_dict[self.mode])
             self.sd.PutBoolean("scam auto",auto_scam)
             self.sd.PutBoolean("auto load", auto_load)
+            self.sd.PutBoolean("auto retract", auto_igus)
             #update components, has to be the last thing called except wait
             self.update()
             

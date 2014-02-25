@@ -19,29 +19,6 @@ def test_operator_control(robot, wpilib):
                 Continue operator control for 1000 control loops
             '''
             
-            
-            if self.loop_count >= 1:
-                LOAD = robot.LOAD_MODE
-                PASS = robot.PASS_MODE
-                SHOOT = robot.SHOOT_MODE
-                components = [robot.BallRoller, robot.IgusSlide, robot.Scam]
-        
-            if self.loop_count <= 200 and self.loop_count >= 1:
-                robot.button_two = True
-                time.sleep(.1)
-                for component in components:
-                    assert component.mode == LOAD or component.mode == SHOOT
-                robot.button_two = False
-                
-            elif self.loop_count >= 201 and self.loop_count <= 400:
-                robot.l_trigger = True
-                time.sleep(.1)
-    
-                for component in components:
-                    assert component.mode == PASS
-                robot.l_trigger = False
-                
-            
             self.loop_count += 1
             return not self.loop_count == 1000
 

@@ -140,7 +140,11 @@ class IgusSlide(object):
             return True
         
     def set_manual(self):
-        self.state = MANUAL_CONTROL
+        if self.is_ready_retract():
+            self.state = MANUAL_CONTROL
+        else:
+            self.next_state = MANUAL_CONTROL
+
         
     def retract(self):
         '''
@@ -192,32 +196,8 @@ class IgusSlide(object):
             shooting mode
         '''
         
-        if self.ball_detector.GetDistance() < 5:
-            ball_sensor_timer.Start()
-            if ball_sensor_timer.HasPeriodPassed(.05) and self.ball_detector.GetDistance() <5:
-                ball_sensor_timer.Reset()
-                if ball_sensor_timer.HasPeriodPassed(.05):
-                    ball_sensor_timer.Stop()
-                    ball_sensor_timer.Reset()
-                    return self.ball_detector.GetDistance() < 5
-        '''
-            #only has meaning in loading mode
-            if self.state == RETRACTED_LOAD:
-                #ball is less than 5 inches away, so we have a ball
-                if self.ball_detector.GetDistance() < 5:
-                    if self.has_ball_count == HAS_BALL:
-                        return True
-                    else:
-                        #increment are ball checker
-                        self.has_ball_count += 1
-                        return False
-                else:
-                    self.has_ball_count = 0
-                    return False
-            else:
-                #always return false
-                return False
-        '''
+        if self.ball_detector.GetAverageDistance() < 5:
+            return True
 
 
         
@@ -303,6 +283,9 @@ class IgusSlide(object):
             if self.next_state == RETRACT_SHOOT:
                 #go to shoot position because we were asked too
                 self.retract_shoot()
+            elif self.next_state == MANUAL_CONTROL:
+                #set manual mode
+                self.state = MANUAL_CONTROL
             else:
                 #go to load position by default
                 self.retract_load()

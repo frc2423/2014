@@ -55,6 +55,9 @@ class Scam(object):
         '''
         return self.l_actuator.is_ready()
     
+    def lowered(self):
+        return not self.l_actuator.motor.GetForwardLimitOK()
+    
     def _update_smartdashboard(self):
         self.sd.PutNumber("Scam Goal", self.l_actuator_val)
         self.sd.PutNumber("Scam Position", self.l_actuator.get_position())

@@ -39,7 +39,6 @@ class BallRoller(object):
         self.direction = OFF
         
     def update(self):
-        #print(self.direction)
         self.ball_roller_motor.Set(self.direction)
             
         self.sd.PutNumber("Ball Roller", self.direction)
