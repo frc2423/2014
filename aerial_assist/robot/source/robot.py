@@ -77,7 +77,8 @@ ANGLE_MAX_ANGLE = -30
 
 #Time for autonomous 
 AUTO_TIME = 10
-AUTO_DRIVE_TIME = 1.5
+AUTO_DRIVE_TIME = 2.5
+AUTO_DRIVE_START = 1
 
 class MyRobot(wpilib.SimpleRobot):
     
@@ -201,6 +202,10 @@ class MyRobot(wpilib.SimpleRobot):
                 self.scam.set_angle(45)
                 self.auto_timer.Start()
                 self.igus_slide.retract_shoot()
+                
+            elif not auto_timer.HasPeriodPassed(AUTO_DRIVE_START):
+                #need to wait till the igus retracts
+                pass
                 
             elif not auto_timer.HasPeriodPassed(AUTO_DRIVE_TIME):
                 self.robot_drive.MecanumDrive_Cartesian(0, 1, 0)
