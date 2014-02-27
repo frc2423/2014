@@ -197,7 +197,7 @@ class MyRobot(wpilib.SimpleRobot):
         delay = PreciseDelay(CONTROL_LOOP_WAIT_TIME)
         self.sd.PutNumber("Robot Mode", self.MODE_AUTONOMOUS)
         has_shot = False
-        while self.IsAutonomousControl() and self.IsEnabled():
+        while self.IsAutonomous() and self.IsEnabled():
             if auto_timer.Get() == 0:
                 self.scam.set_angle(45)
                 self.auto_timer.Start()
