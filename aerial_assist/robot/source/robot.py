@@ -200,7 +200,7 @@ class MyRobot(wpilib.SimpleRobot):
         while self.IsAutonomous() and self.IsEnabled():
             if auto_timer.Get() == 0:
                 self.scam.set_angle(45)
-                self.auto_timer.Start()
+                auto_timer.Start()
                 self.igus_slide.retract_shoot()
                 
             elif not auto_timer.HasPeriodPassed(AUTO_DRIVE_START):
