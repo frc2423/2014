@@ -135,7 +135,6 @@ class ws2801_led(object):
         if(self.lock.acquire(False)):
             t = threading.Thread(target=self.threaded_update)
             t.start()
-            t.join()
             
         
         

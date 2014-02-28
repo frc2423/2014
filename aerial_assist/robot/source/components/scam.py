@@ -60,7 +60,7 @@ class Scam(object):
     
     def _update_smartdashboard(self):
         self.sd.PutNumber("Scam Goal", self.l_actuator_val)
-        self.sd.PutNumber("Scam Position", self.l_actuator.get_position())
+        self.sd.PutNumber("Scam Angle", self.l_actuator.get_position())
         self.sd.PutBoolean("In Position", self.in_position())
 
     def update(self):
