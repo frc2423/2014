@@ -69,7 +69,7 @@ SCAM_I = .1
 SCAM_D = 14
 
 #guess based on specs todo fix this based on emperical data
-THRESHOLD = .04 #position in degrees
+THRESHOLD = .045 #position in degrees
 ANGLE_MAX_POSITION = .757
 ANGLE_MIN_POSITION = .042
 ANGLE_MIN_ANGLE = 65
@@ -211,11 +211,14 @@ class MyRobot(wpilib.SimpleRobot):
 			elif auto_timer.Get() < AUTO_DRIVE_TIME:
 				self.robot_drive.MecanumDrive_Cartesian(0, -.5, 0)	
 				
-			elif auto_timer.Get() < 5:
+			elif auto_timer.Get() < 4:
 				#need to wait till the igus retracts
 				pass
 				
-			
+			elif auto_timer.Get() <5:
+				#set motor to stop angle
+				self.set_speed(0)
+				
 			elif has_shot == False:
 				self.robot_drive.MecanumDrive_Cartesian(0, 0, 0,)
 				self.igus_slide.shoot(True)
