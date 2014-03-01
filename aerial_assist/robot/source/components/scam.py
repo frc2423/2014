@@ -12,7 +12,7 @@ from common.modes import *
 
 #Variables 
 LOADING_ANGLE = -31
-SHOOTING_ANGLE = 45
+SHOOTING_ANGLE = 30 
 PASSING_ANGLE = LOADING_ANGLE
 
 class Scam(object):
