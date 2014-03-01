@@ -65,7 +65,6 @@ class RobotWidget(gtk.DrawingArea):
             return (-angle + 30)
         
     def on_expose(self, widget, event):
-        self.angle = 0
         
         # background
         event.window.draw_pixbuf(None, self.robot, 0, 0, 0, 0)
