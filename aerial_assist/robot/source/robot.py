@@ -217,7 +217,7 @@ class MyRobot(wpilib.SimpleRobot):
 				
 			elif auto_timer.Get() <5:
 				#set motor to stop angle
-				self.set_speed(0)
+				self.scam.set_speed(0)
 				
 			elif has_shot == False:
 				self.robot_drive.MecanumDrive_Cartesian(0, 0, 0,)
