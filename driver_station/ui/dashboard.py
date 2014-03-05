@@ -69,10 +69,12 @@ class Dashboard(object):
         
         self.processor = processor
         self.no_cam = no_cam
-        if no_cam != True:
+        if no_cam == False:
+            
             camera = camera_widget.CameraWidget((640,480))
-        
-        self.ui_filename = 'dashboard_no_cam.ui'
+            self.processor.set_camera_widget(camera)
+        else:    
+            self.ui_filename = 'dashboard_no_cam.ui'
         
         util.initialize_from_xml(self)
         
@@ -168,7 +170,7 @@ class Dashboard(object):
             logger.info("NetworkTables connection to client detected")
             
         if self.no_cam != True:   
-            #self.processor.start()
+            self.processor.start()
             self.camera_widget.start()
         
     def on_connection_disconnect(self, remote):
@@ -199,7 +201,7 @@ class Dashboard(object):
         else:
             # don't waste disk space while the robot isn't enabled
             
-            #self.processor.disable_image_logging()
+            self.processor.disable_image_logging()
             
             logger.info("Robot switched into disabled mode")
             self.control_notebook.set_current_page(0)

@@ -43,8 +43,8 @@ def configure_options():
     
     parser.add_option('--competition', dest='competition', default=False, action='store_true',
                       help='Set the dashboard to be in competition mode')
-	
+    
     parser.add_option('--no-cam', dest='no_cam', default=False, action='store_true',
                        help='Sets the dashboard to not use a camera')
-                       
+    
     return parser
