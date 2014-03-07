@@ -15,16 +15,6 @@
 # object is created each time
 #
 
-def test_autonomous(robot, wpilib):
-    
-    wpilib.internal.enabled = True
-    robot.Autonomous()
-    print('auto')
-
-
-def test_disabled(robot):
-    robot.Disabled()
-    print('dis')
 
 def test_operator_control(robot, wpilib):
     
@@ -49,7 +39,7 @@ def test_operator_control(robot, wpilib):
                 current value.
             '''
             self.loop_count += 1
-            
+            print("blah")
             return not self.loop_count == 1000
     
     print('argh')

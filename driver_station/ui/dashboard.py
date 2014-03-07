@@ -44,6 +44,10 @@ class Dashboard(object):
         'manual_mode_button',
         'shooting_mode_button',
         
+        'shoot_angle_button',
+        'max_angle_button',
+        'truss_angle_button',
+        
         'shuttle_status',
         'ready_status',
         'angle_status',
@@ -104,6 +108,12 @@ class Dashboard(object):
             text = old_widget.get_label()
             setattr(self, name, util.replace_widget(old_widget, toggle_button.ToggleButton(active_pixbuf, inactive_pixbuf, text, clickable=False, default=False)))
             
+        #load the angle buttons
+        for mode in ['truss', 'shoot', 'max']:
+            active = util.pixbuf_from_file('angle_' + mode + '_active.png')
+            inactive = util.pixbuf_from_file('angle_' + mode + '_inactive.png')
+            name = '%s_angle_button' % mode
+            setattr(self, name, util.replace_widget(getattr(self, name), toggle_button.ToggleButton(active, inactive, clickable=True, default=False)))
             
         # setup the mode buttons
         for mode in ['passing', 'loading', 'manual', 'shooting']:
@@ -142,6 +152,12 @@ class Dashboard(object):
             nt.attach_toggle(table, 'auto scam', self.auto_scam_button)
             nt.attach_toggle(table, 'auto igus', self.auto_retract_button)
             
+            #angle chooser
+            angle_select_widgets = {'shoot angle': self.shoot_angle_button,
+                                    'truss angle': self.truss_angle_button,
+                                    'max angle': self.truss_angle_button}
+            
+            nt.attach_chooser_buttons(table, 'Shooting Goal', angle_select_widgets)
             
             # other chooser
             widgets = {'Passing Mode': self.passing_mode_button, 

@@ -1,6 +1,11 @@
 from common.logitech_util import * 
-from components.scam import SHOOTING_ANGLE
+from components.scam import SHOOTING_ANGLE, MAX_ANGLE, TRUSS_ANGLE
 
+try:
+    import wpilib
+except ImportError:
+    from pyfrc import wpilib
+    
 class LoadingMode(object):
 
     # this name should be descriptive and unique. This will be shown to the user
@@ -22,8 +27,18 @@ class LoadingMode(object):
         self.igus_slide = components['igus_slide']
         self.scam = components['scam']
         
+        #chooser which lets us know which angle we want to be at
+        self.angle_chooser = wpilib.SendableChooser()
+        #add diffrent angles
+        self.angle_chooser.AddDefault('shoot angle', SHOOTING_ANGLE)
+        self.angle_chooser.AddObject('truss angle', TRUSS_ANGLE)
+        self.angle_chooser.AddObject('max angle', MAX_ANGLE)
+        
+        wpilib.SmartDashboard.PutData('Shooting Goal', self.angle_chooser)
+        
         self.ds = ds
         
+        self.angle = None
     def on_enable(self):
         
         #
@@ -39,6 +54,18 @@ class LoadingMode(object):
             set platform to shooting mode
         '''
         #
+        # Get Angle from dashboard
+        #
+        self.old_angle = self.angle
+        self.angle = self.angle_chooser.GetSelected()
+        
+        if self.angle is None:
+            angle = SHOOTING_ANGLE
+            
+        if self.angle != self.old_angle:
+            print("New angle set to: " , self.angle)
+            
+        #
         #while we are not in position the ball rollers should keep feeding
         #the ball in
         #
@@ -50,7 +77,7 @@ class LoadingMode(object):
         #
         
         if auto_scam: 
-            self.scam.set_angle(SHOOTING_ANGLE)
+            self.scam.set_angle(self.angle)
             # we are in position, stop using PID, were better without it
             if self.scam.in_position():
                 self.scam.set_speed(0)

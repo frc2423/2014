@@ -12,7 +12,15 @@ from common.modes import *
 
 #Variables 
 LOADING_ANGLE = -31
-SHOOTING_ANGLE = 30 
+
+#shooting angle obtained by imperical evidence
+SHOOTING_ANGLE = 28.5
+
+#truss angle based on maximum distance shoot, some where around 45 degrees
+TRUSS_ANGLE = 48
+
+#Max angle (go slightly above max to insure maximum retraction of slide)
+MAX_ANGLE = 67
 PASSING_ANGLE = LOADING_ANGLE
 
 class Scam(object):

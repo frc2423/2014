@@ -110,10 +110,11 @@ try:
         # initialize cv2.imshow replacement
         import ui.widgets.imshow
         
-        try:
-            camera_processor.initialize(options)
-        except RuntimeError:
-            exit(1)
+        if not no_cam:
+            try:
+                camera_processor.initialize(options)
+            except RuntimeError:
+                exit(1)
             
         # gtk main
         dashboard.show_all()
@@ -127,9 +128,9 @@ try:
         # Presumably if we can talk to the robot, we can talk to the camera 
         # also. If we're not using a live feed, then just start it regardless.  
         # 
-        
-        if table is None or not camera_processor.is_live_feed():
-            camera_processor.start()
+        if not no_cam:
+            if table is None or not camera_processor.is_live_feed():
+                camera_processor.start()
             
         #gtk.threads_init()
             

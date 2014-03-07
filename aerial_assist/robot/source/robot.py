@@ -206,7 +206,7 @@ class MyRobot(wpilib.SimpleRobot):
 			if auto_timer.Get() == 0:
 				auto_timer.Start()
 				self.igus_slide.retract_shoot()
-				self.scam.set_angle(28.5)
+				self.scam.set_angle(SHOOTING_ANGLE)
 				
 			elif auto_timer.Get() < AUTO_DRIVE_TIME:
 				self.robot_drive.MecanumDrive_Cartesian(0, -.5, 0)	

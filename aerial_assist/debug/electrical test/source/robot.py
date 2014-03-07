@@ -5,12 +5,10 @@ except ImportError:
 
 
 from common.delay import PreciseDelay
-from common.generic_distance_sensor import GenericDistanceSensor, MB10X3
+from common.generic_distance_sensor import GenericDistanceSensor, MB10X3, GP2D120
 import common.logitech_controller as lt
 
 #digital I/O
-ball_optical = 2
-shuttle_optical = 1
 light_data = 4
 light_clock = 5
 compressor_switch = 6
@@ -20,6 +18,8 @@ left_distance_sensor = 2
 right_distance_sensor = 3
 shuttle_distance_sensor = 1
 
+ball_optical = 4
+shuttle_optical =5
 #joystick
 joystick = wpilib.Joystick(1)
 
@@ -53,16 +53,16 @@ class MyRobot(wpilib.SimpleRobot):
         wpilib.SimpleRobot.__init__(self)
         
         #PWM
-        self.front_left_jag =  wpilib.Jaguar(1)
-        self.front_right_jag = wpilib.Jaguar(2)
+        self.front_left_jag =  wpilib.Jaguar(2)
+        self.front_right_jag = wpilib.Jaguar(1)
         self.back_left_jag =   wpilib.Jaguar(4)
         self.back_right_jag =  wpilib.Jaguar(3)
 
         self.robot_drive = wpilib.RobotDrive(self.front_left_jag, self.back_left_jag, self.front_right_jag, self.back_right_jag)
         self.sd = wpilib.SmartDashboard
         
-        self.ball_detector = wpilib.DigitalInput(ball_optical)
-        self.shuttle_detector = wpilib.DigitalInput(shuttle_optical)
+        self.ball_detector = GenericDistanceSensor(ball_optical, GP2D120)
+        self.shuttle_detector = GenericDistanceSensor(shuttle_optical, GP2D120)
         
         self.shuttle_dist = GenericDistanceSensor(shuttle_distance_sensor, MB10X3)
         self.front_dist_left = GenericDistanceSensor(left_distance_sensor, MB10X3)
@@ -107,15 +107,51 @@ class MyRobot(wpilib.SimpleRobot):
         wd = self.watchdog
         wd.SetExpiration(CONTROL_LOOP_WAIT_TIME * 2)
         wd.SetEnabled(True)
+        
         while self.IsOperatorControl() and self.IsEnabled():
             wd.Feed()
-            y_axis = self.logitech.GetX()
-            x_axis = -self.logitech.GetY()
-            twist = self.logitech.GetRawAxis(4)
-            self.robot_drive.MecanumDrive_Cartesian(x_axis, y_axis, twist)
+            
+            if self.logitech.GetRawButton(lt.SELECT):
+                
+                print ( 'manual ')
+                if self.logitech.GetRawButton(1):
+                    self.front_left_jag.Set(1)
+                    self.front_right_jag.Set(0)
+                    self.back_left_jag.Set(0)
+                    self.back_right_jag.Set(0)
+                 
+                elif self.logitech.GetRawButton(2):
+                    self.front_left_jag.Set(0)
+                    self.front_right_jag.Set(1)
+                    self.back_left_jag.Set(0)
+                    self.back_right_jag.Set(0)
+                    
+                elif self.logitech.GetRawButton(3):
+                    self.front_left_jag.Set(0)
+                    self.front_right_jag.Set(0)
+                    self.back_left_jag.Set(1)
+                    self.back_right_jag.Set(0)
+                
+                elif self.logitech.GetRawButton(4):
+                    self.front_left_jag.Set(0)
+                    self.front_right_jag.Set(0)
+                    self.back_left_jag.Set(0)
+                    self.back_right_jag.Set(1)  
+                    
+            else:
+                y_axis = self.logitech.GetRawAxis(lt.L_AXIS_Y)
+                twist =  self.logitech.GetRawAxis(lt.R_AXIS_X)
+                x_axis = self.logitech.GetRawAxis(lt.L_AXIS_X)
+ 
+                axes = [y_axis, twist, x_axis]
+                for axis in axes: 
+                    if axis < .1:
+                        axis = 0
+                        
+                self.robot_drive.MecanumDrive_Cartesian(x_axis, y_axis, twist )
             
             if self.logitech.GetRawButton(2):
-                self.shuttle_motor.Set(-.8)
+                self.shuttle_motor.Set(-1)
             else:
                 self.shuttle_motor.Set(0)
             
@@ -132,10 +168,10 @@ class MyRobot(wpilib.SimpleRobot):
 
                 
             #xbox axis left and right on dpad 
-            if logitech.GetRawButton(lt.R_BUMMPER):   
+            if self.logitech.GetRawButton(lt.R_BUMPER):   
                 print(" relay set to 1")
                 self.ball_roller_relay.Set(wpilib.Relay.kForward)
-            elif logitech.GetRawButton(lt.R_TRIGGER):
+            elif self.logitech.GetRawButton(lt.R_TRIGGER):
                 print( "relay set to -1")
                 self.ball_roller_relay.Set(wpilib.Relay.kReverse)
             else:
@@ -144,21 +180,21 @@ class MyRobot(wpilib.SimpleRobot):
             self.sd.PutNumber("Ball roller", int(self.logitech.GetRawAxis(lt.D_PAD_AXIS_X)))
                 
             
-            if logitech.GetRawButton(lt.L_BUMPER):
+            if self.logitech.GetRawButton(lt.L_BUMPER):
                 print('kForward')
                 self.shooter_solenoid.Set(wpilib.DoubleSolenoid.kForward)
                 
-            elif logitech.GetRawButton(lt.L_TRIGGER):
+            elif self.logitech.GetRawButton(lt.L_TRIGGER):
                 print('kReverse')
                 self.shooter_solenoid.Set(wpilib.DoubleSolenoid.kReverse)
                 
         
 
-            self.sd.PutBoolean("Shuttle detector", bool(self.shuttle_detector.Get()))
-        
+            self.sd.PutNumber("Shuttle detector", self.shuttle_detector.GetDistance())
+            print("Shuttle detector ", self.shuttle_detector.GetDistance())
 
-            self.sd.PutBoolean("Ball detector", bool(self.ball_detector.Get()))
-        
+            self.sd.PutNumber("Ball detector", self.ball_detector.GetDistance())
+            print("Ball Detector", self.ball_detector.GetDistance())
             
             self.sd.PutNumber("Shuttle Distance", self.shuttle_dist.GetDistance())
             self.sd.PutNumber("Front distance left", self.front_dist_left.GetDistance())
