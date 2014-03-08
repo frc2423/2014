@@ -11,7 +11,7 @@
 $python = "C:\Python27\python27.exe"
 ;$python = "C:\Python27\pythonw27.exe"
 $dir = "./"
-$options = "--robot-ip 127.0.0.1  --no-cam --competition"
+$options = "--robot-ip 10.24.23.2 --no-cam --competition --log-images"
 
 ; We use GStreamer for PyGTK, so setup the environment correctly to use it
 $sdkdir = EnvGet("GSTREAMER_SDK_ROOT_X86")

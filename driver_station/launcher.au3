@@ -5,12 +5,12 @@
 ;    so to get around this we compile this AutoIt script to an exe, and we
 ; 	 put it in the right spot (c:\Program Files\FRC Dashboard\dashboard.exe),
 ;    then this dashboard program gets launched whenever the driver station
-;    is launched. 
+;    is launched.
 ;
 
 $python = "C:\Python27\python27.exe"
 ;$python = "C:\Python27\pythonw27.exe"
-$dir = "C:\WindRiver\workspace\kwarqs\GIT\2014\driver_station"
+$dir = "./"
 $options = "--robot-ip 10.24.23.2 --camera-ip 10.24.23.11 --competition --log-images"
 
 ; We use GStreamer for PyGTK, so setup the environment correctly to use it

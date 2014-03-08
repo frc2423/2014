@@ -43,7 +43,7 @@ class _AutoJaguar(object):
             
             Note that in manual mode, this always returns True
         '''
-        if self.motor.control_mode == self.MANUAL:
+        if self.mode == self.MANUAL:
             return True
         
         value = self.get_value()

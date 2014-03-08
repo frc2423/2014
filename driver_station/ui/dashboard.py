@@ -155,7 +155,7 @@ class Dashboard(object):
             #angle chooser
             angle_select_widgets = {'shoot angle': self.shoot_angle_button,
                                     'truss angle': self.truss_angle_button,
-                                    'max angle': self.truss_angle_button}
+                                    'max angle': self.max_angle_button}
             
             nt.attach_chooser_buttons(table, 'Shooting Goal', angle_select_widgets)
             
