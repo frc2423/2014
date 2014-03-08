@@ -139,7 +139,7 @@ class MyRobot(wpilib.SimpleRobot):
 		self.l_actuator_auto = AnglePositionJaguar(self.l_actuator, THRESHOLD, ANGLE_MIN_POSITION, ANGLE_MAX_POSITION, ANGLE_MIN_ANGLE, ANGLE_MAX_ANGLE)
 		
 		
-		#sensors
+		#sensors - i think the left one is the one we still have that functions
 		self.shuttle_distance_sensor = GenericDistanceSensor(shuttle_mb10x3_port, MB10X3)
 		self.left_distance_sensor = GenericDistanceSensor(left_mb10x3_port, MB10X3)
 		self.right_distance_sensor = GenericDistanceSensor(right_mb10x3_port, MB10X3)
@@ -182,7 +182,7 @@ class MyRobot(wpilib.SimpleRobot):
 		self.sd.PutBoolean('auto igus', True)
 		self.sd.PutBoolean('auto scam', True)
 		self.sd.PutBoolean('auto load', False)
-		
+		self.sd.PutNumber('robot distance', self.left_distance_sensor.GetDistance())
 		
 	def RobotInit(self):
 		pass
@@ -246,6 +246,8 @@ class MyRobot(wpilib.SimpleRobot):
 		
 		dog.SetEnabled(False)
 	def update(self):
+		#update smart dashboard with distance from wall
+		self.sd.PutNumber('robot distance', self.left_distance_sensor.GetDistance())
 		for component in self.components:
 			component.update()
 			

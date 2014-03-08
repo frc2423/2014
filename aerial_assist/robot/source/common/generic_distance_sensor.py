@@ -50,7 +50,7 @@ class GenericDistanceSensor(wpilib.AnalogChannel):
     
         
     def GetDistance(self):
-        '''gets distance in cm based on the voltage''' 
+        '''gets distance in the desired mesurement system based on the voltage''' 
         
         v = self.GetVoltage()
         
@@ -61,7 +61,7 @@ class GenericDistanceSensor(wpilib.AnalogChannel):
         # convert the voltage to a distance
         distance = self.distance_fn(v)
         
-        # convert to appropriate units
+        # convert to appropriate units ( converting to inches)
         if self.system == ENGLISH:
             distance /= INCH_TO_CM
         
