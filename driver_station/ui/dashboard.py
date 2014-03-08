@@ -201,8 +201,6 @@ class Dashboard(object):
             if self.processor != None:
                 self.processor.enable_image_logging()
             
-            logger.info("Robot switched into autonomous mode")
-            logger.info("-> Current mode is: %s", current_mode)
             self.control_notebook.set_current_page(0)
             
             
@@ -216,8 +214,8 @@ class Dashboard(object):
             
         else:
             # don't waste disk space while the robot isn't enabled
-            
-            self.processor.disable_image_logging()
+            if self.processor != None:
+                self.processor.disable_image_logging()
             
             logger.info("Robot switched into disabled mode")
             self.control_notebook.set_current_page(0)
