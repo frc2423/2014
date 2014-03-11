@@ -40,6 +40,7 @@ class RobotWidget(gtk.DrawingArea):
         
         self.table = table
         self.angle = 0
+        self.distance = 0
         self.robot = ui.util.pixbuf_from_file('Robot-bace.gif')
         
         # size request
@@ -58,6 +59,12 @@ class RobotWidget(gtk.DrawingArea):
             self.angle = angle
             self.queue_draw()
         
+    def set_distance(self, distance):   
+        
+        if distance != self.distance:
+            self.distance = distance
+            self.queue_draw()
+         
     def get_ball_roller_angle(self, angle):
         if angle > 30:
             return 0
@@ -72,9 +79,13 @@ class RobotWidget(gtk.DrawingArea):
         cxt = event.window.cairo_create()
         
         # angle text
-        cxt.move_to(30, 30)
-        cxt.set_font_size(20)
+        cxt.move_to(10, 30)
+        cxt.set_font_size(18)
         cxt.show_text('%.2f' % self.angle)
+        
+        cxt.move_to(10,60)
+        cxt.set_font_size(18)
+        cxt.show_text('Dist(inch): %.1f' % self.distance)
         
         cxt.set_source_rgb(0,0,0)
         cxt.fill_preserve()
