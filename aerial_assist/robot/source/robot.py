@@ -119,7 +119,8 @@ class MyRobot(wpilib.SimpleRobot):
 		self.camera_led = wpilib.Relay(camera_led_relay_port)
 		self.camera_led.Set(wpilib.Relay.kForward)
 		
-		ball_roller_relay = wpilib.Relay(ball_roller_relay_port)
+		self.ball_roller_relay = wpilib.Relay(ball_roller_relay_port)
+		self.ball_roller_motor = wpilib.Jaguar(ball_roller_motor)
 		
 		#Joystick
 		self.logitech = wpilib.Joystick(joystick_channel)
@@ -157,7 +158,7 @@ class MyRobot(wpilib.SimpleRobot):
 		
 		
 		#create components
-		self.ball_roller = BallRoller(ball_roller_relay)
+		self.ball_roller = BallRoller(self.ball_roller_motor)
 		self.igus_slide  = IgusSlide(self.igus_motor, self.motor_release_solenoid, self.shuttle_distance_sensor, self.ball_detector, self.shuttle_detector)  
 		self.scam = Scam(self.l_actuator_auto)
 		
@@ -206,7 +207,7 @@ class MyRobot(wpilib.SimpleRobot):
 			if auto_timer.Get() == 0:
 				auto_timer.Start()
 				self.igus_slide.retract_shoot()
-				self.scam.set_angle(SHOOTING_ANGLE)
+				self.scam.set_angle(28.5)
 				
 			elif auto_timer.Get() < AUTO_DRIVE_TIME:
 				self.robot_drive.MecanumDrive_Cartesian(0, -.5, 0)	

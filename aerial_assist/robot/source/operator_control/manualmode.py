@@ -38,7 +38,7 @@ class LoadingMode(object):
     #we want all manual actions to be accessible from operator control mode so
     #make them here
     def manual_scam(self):
-        if stick_button_on(L_TRIGGER,self.ds):
+        if stick_axis(TRIGGER,self.ds) > .2:
             man_scam_speed = 1
         elif stick_button_on(L_BUMPER,self.ds):
             man_scam_speed = -1

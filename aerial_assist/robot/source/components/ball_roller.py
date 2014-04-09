@@ -7,9 +7,9 @@ except ImportError:
 from common.modes import *
 
 #Constants
-IN = wpilib.Relay.kForward
-OUT = wpilib.Relay.kReverse
-OFF = wpilib.Relay.kOff
+IN = 1
+OUT = -1
+OFF = 0
     
 #states
 AUTO_LOAD = 0

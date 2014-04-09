@@ -179,11 +179,7 @@ class OperatorControlManager(object):
                 
                 #self.led_strip.set_led_color(1, 255, 0, 0, repeat = self.led_strip.get_num_leds())
                 
-                axes = [y_axis, twist, x_axis]
-                for axis in axes: 
-                    if axis < .1:
-                        axis = 0
-                
+
                 self.robot_drive.MecanumDrive_Cartesian(x_axis, y_axis, twist )
                 
                 
@@ -192,16 +188,16 @@ class OperatorControlManager(object):
                 #if no user input check if there is a next mode and set to it
                 #if there is
                 #
-                if stick_button_on(1,self.ds):
+                if stick_button_on(3,self.ds):
                     print("robot: loading mode")
                     self.set_selected("Loading Mode")
                     
                     
-                elif stick_button_on(2,self.ds): 
+                elif stick_button_on(1,self.ds): 
                     print("robot: passing mode")
                     self.set_selected("Passing Mode")
                     
-                elif stick_button_on(3,self.ds): 
+                elif stick_button_on(2,self.ds): 
                     print("robot: shooting mode")
                     self.set_selected("Shooting Mode")
                 
@@ -228,13 +224,8 @@ class OperatorControlManager(object):
                 
                 #
                 #Manual igus_slide
-                #
-                
-                if stick_axis(D_PAD_AXIS_Y,self.ds) < 0:
-                    self.sd.PutBoolean('auto igus', False)
-                    
-                elif stick_axis(D_PAD_AXIS_Y,self.ds) > 0:
-                    self.sd.PutBoolean('auto igus', True)
+             
+                self.sd.PutBoolean('auto igus', True)
                 
                 self.set()
             except:

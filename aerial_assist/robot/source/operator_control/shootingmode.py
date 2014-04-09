@@ -96,5 +96,5 @@ class LoadingMode(object):
         #igus_slide will automatically try to shoot
         #
         
-        if stick_button_on(R_TRIGGER,self.ds):
+        if stick_axis(TRIGGER,self.ds) < -.3:
             self.igus_slide.shoot(override = stick_button_on(R_BUMPER,self.ds))
