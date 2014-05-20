@@ -8,8 +8,8 @@
 ;    is launched. 
 ;
 
-$python = "C:\Python27\python27.exe"
-;$python = "C:\Python27\pythonw27.exe"
+$python = "C:\Python27\python.exe"
+;$python = "C:\Python27\pythonw.exe"
 $dir = "C:\WindRiver\workspace\kwarqs\GIT\2014\driver_station"
 $options = "--ask --competition"
 

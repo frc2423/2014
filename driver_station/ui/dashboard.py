@@ -169,7 +169,7 @@ class Dashboard(object):
             
             # robot widget
             nt.attach_fn(table, 'Scam Angle', lambda k, v: self.robot_widget.set_angle(v), self.robot_widget)
-            
+            nt.attach_fn(table, 'robot distance', lambda k, v: self.robot_widget.set_distance(v),self.robot_widget)
             
             # modes
             nt.attach_fn(table, 'Robot Mode', self.on_robot_mode_update, self.window)
