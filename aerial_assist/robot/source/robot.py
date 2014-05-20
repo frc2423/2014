@@ -16,7 +16,7 @@ import common.logitech_controller as lt
 from components.ball_roller import BallRoller
 import components.ball_roller as bl
 from components.igus_slide import IgusSlide,RELEASE, ENGAGE
-from components.scam import Scam, LOADING_ANGLE, SHOOTING_ANGLE, PASSING_ANGLE
+from components.scam import Scam, LOADING_ANGLE, SHOOTING_ANGLE, PASSING_ANGLE, SHOOTING_ANGLE_AUTO
 
 #Operator control Manager
 from operator_control import OperatorControlManager
@@ -54,8 +54,8 @@ solenoid2 = 2
 
 #relay channels
 compressorRelayChannel = 6
-camera_led_relay_port = 7
-ball_roller_relay_port = 5
+camera_led_relay_port = 5
+
 
 #LED
 led_strip_length = 36
@@ -117,9 +117,8 @@ class MyRobot(wpilib.SimpleRobot):
 		
 		# relay
 		self.camera_led = wpilib.Relay(camera_led_relay_port)
-		self.camera_led.Set(wpilib.Relay.kForward)
-		
-		ball_roller_relay = wpilib.Relay(ball_roller_relay_port)
+		self.camera_led.Set(wpilib.Relay.kReverse)
+		self.ball_roller_motor = wpilib.Jaguar(ball_roller_motor)
 		
 		#Joystick
 		self.logitech = wpilib.Joystick(joystick_channel)
@@ -157,13 +156,13 @@ class MyRobot(wpilib.SimpleRobot):
 		
 		
 		#create components
-		self.ball_roller = BallRoller(ball_roller_relay)
+		self.ball_roller = BallRoller(self.ball_roller_motor)
 		self.igus_slide  = IgusSlide(self.igus_motor, self.motor_release_solenoid, self.shuttle_distance_sensor, self.ball_detector, self.shuttle_detector)  
 		self.scam = Scam(self.l_actuator_auto)
 		
 		# autonomous mode needs a dict of components
 		components = {
-			# components 
+			# components
 			'ball_roller': self.ball_roller,
 			'igus_slide': self.igus_slide,
 			'scam': self.scam, 
@@ -206,7 +205,7 @@ class MyRobot(wpilib.SimpleRobot):
 			if auto_timer.Get() == 0:
 				auto_timer.Start()
 				self.igus_slide.retract_shoot()
-				self.scam.set_angle(SHOOTING_ANGLE)
+				self.scam.set_angle(SHOOTING_ANGLE_AUTO)
 				
 			elif auto_timer.Get() < AUTO_DRIVE_TIME:
 				self.robot_drive.MecanumDrive_Cartesian(0, -.5, 0)	

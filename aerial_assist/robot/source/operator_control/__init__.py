@@ -179,11 +179,7 @@ class OperatorControlManager(object):
                 
                 #self.led_strip.set_led_color(1, 255, 0, 0, repeat = self.led_strip.get_num_leds())
                 
-                axes = [y_axis, twist, x_axis]
-                for axis in axes: 
-                    if axis < .1:
-                        axis = 0
-                
+
                 self.robot_drive.MecanumDrive_Cartesian(x_axis, y_axis, twist )
                 
                 

@@ -14,7 +14,10 @@ from common.modes import *
 LOADING_ANGLE = -31
 
 #shooting angle obtained by imperical evidence
-SHOOTING_ANGLE = 28.5
+SHOOTING_ANGLE = 33
+
+#SHOOTING_ANGLE for auto mode
+SHOOTING_ANGLE_AUTO = 28.5
 
 #truss angle based on maximum distance shoot, some where around 45 degrees
 TRUSS_ANGLE = 48
