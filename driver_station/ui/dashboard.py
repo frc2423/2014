@@ -97,7 +97,7 @@ class Dashboard(object):
        
         if competition:
             self.window.move(0,0)
-            self.window.resize(1356, 525)
+            self.window.resize(1356, 515)
             
         # load the status buttons
         active_pixbuf = util.pixbuf_from_stock(gtk.STOCK_YES, gtk.ICON_SIZE_BUTTON)
@@ -211,6 +211,10 @@ class Dashboard(object):
             logger.info("Robot switched into teleoperated mode")
             self.control_notebook.set_current_page(1)
             
+            #start in shooting mode at standard shooting angle
+            if self.table is not None:
+                self.table.GetSubTable('Operator Control Mode').PutString('selected', 'Shooting Mode')
+                self.table.GetSubTable('Shooting Goal').PutString('selected', 'shoot angle')
             
         else:
             # don't waste disk space while the robot isn't enabled

@@ -65,18 +65,14 @@ class LoadingMode(object):
         if self.angle != self.old_angle:
             print("New angle set to: " , self.angle)
             
-        #
-        #while we are not in position the ball rollers should keep feeding
-        #the ball in
-        #
-        
-        self.ball_roller.roll_in()
+
         #
         # Set the position of the scam first do angle control, set to 0
         # if we are already in the goal range
         #
         
         if auto_scam: 
+            
             self.scam.set_angle(self.angle)
             # we are in position, stop using PID, were better without it
             if self.scam.in_position():
@@ -84,6 +80,13 @@ class LoadingMode(object):
                 #we are in position ball rollers don't need to be rolled in
                 #any more
                 self.ball_roller.off()
+            else:
+                #
+                #while we are not in position the ball rollers should keep feeding
+                #the ball in
+                #
+                
+                self.ball_roller.roll_in()
             
         #
         #Retract to shooting position, if we are not already there
